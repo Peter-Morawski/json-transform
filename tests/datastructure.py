@@ -326,3 +326,31 @@ class TimeObject(JsonObject):
     @date.setter
     def date(self, value):
         self._date = value
+
+
+class Car(JsonObject):
+    def __init__(self):
+        self._model_name = ""
+        self._max_speed = 0
+
+    @property
+    def mode_name(self):
+        return self._model_name
+
+    @mode_name.setter
+    def mode_name(self, value):
+        self._model_name = value
+
+    @property
+    def max_speed(self):
+        return self._max_speed
+
+    @max_speed.setter
+    def max_speed(self, value):
+        self._max_speed = value
+
+
+class ExtendedCar(Car):
+    def __init__(self):
+        super(ExtendedCar, self).__init__()
+        self._horsepower = 0

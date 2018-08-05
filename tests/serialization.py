@@ -4,7 +4,7 @@ import pytz
 import unittest
 import datetime
 from datastructure import Person, Color, Achievement, AchievementWithoutFields, NotSerializableObject, TimeObject
-from jsontransform import ConfigurationError, DATE_FORMAT, DATETIME_FORMAT, DATETIME_TZ_FORMAT, JsonObject
+from jsontransform import ConfigurationError, DATE_FORMAT, DATETIME_FORMAT, DATETIME_TZ_FORMAT
 
 JOHN_FIRST_NAME = "John"
 JOHN_LAST_NAME = "Doe"
