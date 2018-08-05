@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 
 import unittest
-from serialization import DictSerialization
+from serialization import DictSerialization, DictSerializationWithTimes
 
 
 def create_test_suite():
     suite = unittest.TestSuite()
     suite.addTest(unittest.makeSuite(DictSerialization))
-    # suite.addTest(unittest.makeSuite(DictSerializationWithDates))
+    suite.addTest(unittest.makeSuite(DictSerializationWithTimes))
 
     return suite
 

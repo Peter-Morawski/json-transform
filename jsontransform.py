@@ -26,8 +26,7 @@ def field(func, field_name=None, *args, **kwargs):
     Usage Example
     =============
 
-    .. code:: python
-    class Person(JsonObject):
+     class Person(JsonObject):
         def __init__(self):
             self._first_name = ""
 
@@ -45,7 +44,7 @@ def field(func, field_name=None, *args, **kwargs):
     * The brackets `()` after the @field decorator are important even when no additional arguments are given
     * The :class:`property` decorator must be at the top or else the function won't be recognized as a property
 
-    :param func: The property getter function (which is decorated with **@property**) that should be called to get
+    :param func: The property getter function (which is decorated with @property) that should be called to get
     the value for the JSON field.
     :param field_name: An optional name for the field. If this is not defined the the name of the property will be used.
     """
@@ -73,7 +72,6 @@ class JsonObject(object):
         =======
         JSON string = "{\"name\": \"Peter\", \"age\": 6}"
 
-        .. code-block:: python
         class Person(JsonObject):
             def __init__(self):
                 self._name = ""
@@ -107,7 +105,7 @@ class JsonObject(object):
         """
         Serialize this object into a JSON string.
 
-        :param encoding:
+        :param encoding: The encoding of the string. Default utf-8
         :return: This object serialized as a JSON string.
         """
         return json.dumps(self.to_json_dict(), encoding=encoding)
@@ -124,12 +122,13 @@ class JsonObject(object):
 
     def to_json_file(self, f, encoding="utf-8"):
         """
+        Serialize this object into a file.
 
-        :param f:
-        :param encoding:
-        :return:
+        :param f: a ``.write()``-supporting file-like object.
+        :param encoding: The character encoding for str instances. Default utf-8
         """
-        pass
+        d = self.to_json_dict()
+        json.dump(d, f, encoding=encoding)
 
     @classmethod
     def from_json_dict(cls, json_dict):
@@ -142,9 +141,11 @@ class JsonObject(object):
 
     def to_json_dict(self):
         """
+        Serialize this object into a `dict`.
 
-        :raises :class:`ConfigurationError`
-        :return:
+        :raises ConfigurationError: When this object doesn't define any property getter annotated with the ``field()``
+        decorator.
+        :return: The `dict` representation of this object.
         """
         result = {}
         properties = _JsonUtil.get_decorated_properties(self)
@@ -224,7 +225,11 @@ class _JsonUtil(object):
         elif cls.property_is_simple_type(property_value):
             return property_value
         elif isinstance(property_value, dict):
-            return property_value
+            result = {}
+            for key in property_value.keys():
+                result[key] = cls.get_transformed_property_value(property_value[key])
+
+            return result
         elif cls.property_not_str_and_iterable(property_value):
             result = []
             for item in property_value:

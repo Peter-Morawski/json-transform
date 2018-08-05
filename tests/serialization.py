@@ -3,7 +3,7 @@
 import pytz
 import unittest
 import datetime
-from datastructure import Person, Color, Achievement, AchievementWithoutFields, NotSerializableObject
+from datastructure import Person, Color, Achievement, AchievementWithoutFields, NotSerializableObject, TimeObject
 from jsontransform import ConfigurationError, DATE_FORMAT, DATETIME_FORMAT, DATETIME_TZ_FORMAT, JsonObject
 
 JOHN_FIRST_NAME = "John"
@@ -25,9 +25,6 @@ FATHER_FIRST_NAME = "Catherine"
 FATHER_LAST_NAME = "Doe"
 FATHER_AGE = 17
 FATHER_RELATIVES = []
-
-
-# TODO: Test list with other lists in it
 
 
 class DictSerialization(unittest.TestCase):
@@ -161,16 +158,59 @@ class DictSerialization(unittest.TestCase):
             assert achievement in field_achievements
 
     def test_type_list_with_list(self):
-        self.skipTest("Needs to be implemented")
+        achievements = [
+            JOHN_FRIENDS_NAMES
+        ]
+        self._john.achievements = achievements
+        actual = self._john.to_json_dict()
+        field_achievements = actual[Person.FIELD_ACHIEVEMENTS_NAME]
+
+        assert type(field_achievements) is list
+        assert all(type(item) is list for item in field_achievements)
+        assert len(field_achievements) == len(achievements)
+        assert achievements[0] in field_achievements
 
     def test_type_list_with_dict(self):
-        self.skipTest("Needs to be implemented")
+        achievements = [
+            {
+                "key1": [1, 2, 3],
+                "key2": None
+            }
+        ]
+        self._john.achievements = achievements
+        actual = self._john.to_json_dict()
+        field_achievements = actual[Person.FIELD_ACHIEVEMENTS_NAME]
+
+        assert type(field_achievements) is list
+        assert all(type(item) is dict for item in field_achievements)
+        assert len(field_achievements) == len(achievements)
+        assert achievements[0] in field_achievements
 
     def test_type_list_with_set(self):
-        self.skipTest("Needs to be implemented")
+        achievements = [
+            set(JOHN_FRIENDS_NAMES)
+        ]
+        self._john.achievements = achievements
+        actual = self._john.to_json_dict()
+        field_achievements = actual[Person.FIELD_ACHIEVEMENTS_NAME]
+
+        assert type(field_achievements) is list
+        assert all(type(item) is list for item in field_achievements)
+        assert len(field_achievements) == len(achievements)
+        assert list(achievements[0]) in field_achievements
 
     def test_type_list_with_tuple(self):
-        self.skipTest("Needs to be implemented")
+        achievements = [
+            tuple(JOHN_FRIENDS_NAMES)
+        ]
+        self._john.achievements = achievements
+        actual = self._john.to_json_dict()
+        field_achievements = actual[Person.FIELD_ACHIEVEMENTS_NAME]
+
+        assert type(field_achievements) is list
+        assert all(type(item) is list for item in field_achievements)
+        assert len(field_achievements) == len(achievements)
+        assert list(achievements[0]) in field_achievements
 
     def test_type_list_with_json_object_without_field(self):
         self._john.achievements = [AchievementWithoutFields()]
@@ -185,37 +225,133 @@ class DictSerialization(unittest.TestCase):
             self._john.to_json_dict()
 
     def test_type_dict_with_str(self):
-        self.skipTest("Needs to be implemented")
+        dict_type = {
+            "key": JOHN_FIRST_NAME
+        }
+        self._john.dict_type = dict_type
+        actual = self._john.to_json_dict()
+        field_dict_type = actual[Person.FIELD_DICT_TYPE_NAME]
+
+        assert type(field_dict_type) is dict
+        assert dict_type == field_dict_type
 
     def test_type_dict_with_int(self):
-        self.skipTest("Needs to be implemented")
+        dict_type = {
+            "key": JOHN_AGE
+        }
+        self._john.dict_type = dict_type
+        actual = self._john.to_json_dict()
+        field_dict_type = actual[Person.FIELD_DICT_TYPE_NAME]
+
+        assert type(field_dict_type) is dict
+        assert dict_type == field_dict_type
 
     def test_type_dict_with_float(self):
-        self.skipTest("Needs to be implemented")
+        dict_type = {
+            "key": JOHN_HEIGHT
+        }
+        self._john.dict_type = dict_type
+        actual = self._john.to_json_dict()
+        field_dict_type = actual[Person.FIELD_DICT_TYPE_NAME]
+
+        assert type(field_dict_type) is dict
+        assert dict_type == field_dict_type
 
     def test_type_dict_with_none(self):
-        self.skipTest("Needs to be implemented")
+        dict_type = {
+            "key": None
+        }
+        self._john.dict_type = dict_type
+        actual = self._john.to_json_dict()
+        field_dict_type = actual[Person.FIELD_DICT_TYPE_NAME]
+
+        assert type(field_dict_type) is dict
+        assert dict_type == field_dict_type
 
     def test_type_dict_with_list(self):
-        self.skipTest("Needs to be implemented")
+        dict_type = {
+            "key": JOHN_FRIENDS_NAMES
+        }
+        self._john.dict_type = dict_type
+        actual = self._john.to_json_dict()
+        field_dict_type = actual[Person.FIELD_DICT_TYPE_NAME]
+
+        assert type(field_dict_type) is dict
+        assert len(JOHN_FRIENDS_NAMES) == len(field_dict_type["key"])
+        for name in JOHN_FRIENDS_NAMES:
+            assert name in field_dict_type["key"]
 
     def test_type_dict_with_set(self):
-        self.skipTest("Needs to be implemented")
+        self._john.dict_type = {
+            "key": set(JOHN_FRIENDS_NAMES)
+        }
+        actual = self._john.to_json_dict()
+        field_dict_type = actual[Person.FIELD_DICT_TYPE_NAME]
+
+        assert type(field_dict_type) is dict
+        assert type(field_dict_type["key"]) is list
+        assert len(JOHN_FRIENDS_NAMES) == len(field_dict_type["key"])
+        for name in JOHN_FRIENDS_NAMES:
+            assert name in field_dict_type["key"]
 
     def test_type_dict_with_tuple(self):
-        self.skipTest("Needs to be implemented")
+        self._john.dict_type = {
+            "key": tuple(JOHN_FRIENDS_NAMES)
+        }
+        actual = self._john.to_json_dict()
+        field_dict_type = actual[Person.FIELD_DICT_TYPE_NAME]
+
+        assert type(field_dict_type) is dict
+        assert type(field_dict_type["key"]) is list
+        assert len(JOHN_FRIENDS_NAMES) == len(field_dict_type["key"])
+        for name in JOHN_FRIENDS_NAMES:
+            assert name in field_dict_type["key"]
+
+    def test_type_dict_with_dict(self):
+        self._john.dict_type = {
+            "key": {
+                "key": JOHN_FIRST_NAME
+            }
+        }
+        actual = self._john.to_json_dict()
+        field_dict_type = actual[Person.FIELD_DICT_TYPE_NAME]
+
+        assert type(field_dict_type) is dict
+        self.assertDictEqual(self._john.dict_type, field_dict_type)
 
     def test_type_dict_with_not_serializable_object(self):
-        self.skipTest("Needs to be implemented")
+        dict_type = {
+            "key": NotSerializableObject()
+        }
+        self._john.dict_type = dict_type
+
+        with self.assertRaises(TypeError):
+            self._john.to_json_dict()
 
     def test_type_dict_with_json_object(self):
-        self.skipTest("Needs to be implemented")
+        dict_type = {
+            "key": Achievement()
+        }
+        self._john.dict_type = dict_type
+        actual = self._john.to_json_dict()
+        field_dict_type = actual[Person.FIELD_DICT_TYPE_NAME]
 
-    def test_type_set(self):
-        self.skipTest("Needs to be implemented")
+        assert type(field_dict_type) is dict
 
-    def test_type_tuple(self):
-        self.skipTest("Needs to be implemented")
+        expected = {
+            "key": Achievement().to_json_dict()
+        }
+        self.assertDictEqual(expected, field_dict_type)
+
+    def test_if_type_set_is_converted_to_list(self):
+        self._john.achievements = set(JOHN_FRIENDS_NAMES)
+        actual = self._john.to_json_dict()
+        assert type(actual[Person.FIELD_ACHIEVEMENTS_NAME]) is list
+
+    def test_if_type_tuple_is_converted_to_list(self):
+        self._john.achievements = tuple(JOHN_FRIENDS_NAMES)
+        actual = self._john.to_json_dict()
+        assert type(actual[Person.FIELD_ACHIEVEMENTS_NAME]) is list
 
     def test_with_some_decorator_before_field_decorator(self):
         actual = self._john.to_json_dict()
@@ -225,45 +361,53 @@ class DictSerialization(unittest.TestCase):
         actual = self._john.to_json_dict()
         assert Person.FIELD_FAVORITE_PET_NAME in actual.keys()
 
-# class DictSerializationWithDates(unittest.TestCase):
-#     def setUp(self):
-#         self._person = PersonWithTimestamp()
-#         self._person.first_name = JOHN_FIRST_NAME
-#         self._person.last_name = JOHN_LAST_NAME
-#         self._person.age = JOHN_AGE
-#         self._expected_person = {
-#             PersonWithTimestamp.FIELD_FIRST_NAME: JOHN_FIRST_NAME,
-#             PersonWithTimestamp.FIELD_LAST_NAME: JOHN_LAST_NAME,
-#             PersonWithTimestamp.FIELD_AGE_NAME: JOHN_AGE,
-#             PersonWithTimestamp.FIELD_RELATIVES_NAME: [],
-#         }
-#
-#     def test_to_json_dict_with_naive_datetime(self):
-#         dt = datetime.datetime.now()
-#         self._person.created = dt
-#
-#         self._expected_person[PersonWithTimestamp.FIELD_CREATED_NAME] = dt.strftime(DATETIME_FORMAT)
-#         self.assertDictEqual(self._expected_person, self._person.to_json_dict())
-#
-#     def test_to_json_dict_with_utc_datetime(self):
-#         self._datetime_timezone_helper("UTC", "+0000")
-#
-#     def test_to_json_dict_with_berlin_datetime(self):
-#         self._datetime_timezone_helper("Europe/Berlin", "+0200")
-#
-#     def test_to_json_dict_with_london_datetime(self):
-#         self._datetime_timezone_helper("Europe/London", "+0100")
-#
-#     def test_to_json_dict_with_istanbul_datetime(self):
-#         self._datetime_timezone_helper("Europe/Istanbul", "+0300")
-#
-#     def test_to_json_dict_with_japan_datetime(self):
-#         self._datetime_timezone_helper("Asia/Tokyo", "+0900")
-#
-#     def _datetime_timezone_helper(self, timezone_name, utc_offset):
-#         dt = datetime.datetime.now(pytz.timezone(timezone_name))
-#         self._person.created = dt
-#
-#         self._expected_person[PersonWithTimestamp.FIELD_CREATED_NAME] = dt.strftime(DATETIME_TZ_FORMAT)
-#         self.assertDictEqual(self._expected_person, self._person.to_json_dict())
-#         self.assertTrue(self._person.to_json_dict()[PersonWithTimestamp.FIELD_CREATED_NAME].endswith(utc_offset))
+
+class DictSerializationWithTimes(unittest.TestCase):
+    def setUp(self):
+        self._time_obj = TimeObject()
+
+    def test_date(self):
+        date = datetime.date.today()
+        expected = date.strftime(DATE_FORMAT)
+
+        self._time_obj.date = date
+        actual = self._time_obj.to_json_dict()
+        field_date = actual[TimeObject.FIELD_DATE_NAME]
+
+        assert field_date == expected
+
+    def test_with_naive_datetime(self):
+        dt = datetime.datetime.now()
+        expected = dt.strftime(DATETIME_FORMAT)
+
+        self._time_obj.dt = dt
+        actual = self._time_obj.to_json_dict()
+        field_dt = actual[TimeObject.FIELD_DT_NAME]
+
+        assert field_dt == expected
+
+    def test_with_utc_datetime(self):
+        self._datetime_timezone_helper("UTC", "+0000")
+
+    def test_with_berlin_datetime(self):
+        self._datetime_timezone_helper("Europe/Berlin", "+0200")
+
+    def test_with_london_datetime(self):
+        self._datetime_timezone_helper("Europe/London", "+0100")
+
+    def test_with_istanbul_datetime(self):
+        self._datetime_timezone_helper("Europe/Istanbul", "+0300")
+
+    def test_with_tokyo_datetime(self):
+        self._datetime_timezone_helper("Asia/Tokyo", "+0900")
+
+    def _datetime_timezone_helper(self, timezone_name, utc_offset):
+        dt = datetime.datetime.now(pytz.timezone(timezone_name))
+        self._time_obj.dt = dt
+
+        expected = dt.strftime(DATETIME_TZ_FORMAT)
+        actual = self._time_obj.to_json_dict()
+        field_dt = actual[TimeObject.FIELD_DT_NAME]
+
+        assert field_dt == expected
+        self.assertTrue(field_dt.endswith(utc_offset))

@@ -65,6 +65,7 @@ class Person(JsonObject):
     FIELD_FAVORITE_NUMBERS_NAME = "favoriteNumbers"
     FIELD_ACHIEVEMENTS_NAME = "achievements"
     FIELD_FAVORITE_PET_NAME = "favoritePet"
+    FIELD_DICT_TYPE_NAME = "dictType"
     FIELD_BIRTH_DATE = "BirthDate"
     FIELD_RECORD_CREATED_NAME = "recordCreated"
 
@@ -80,7 +81,7 @@ class Person(JsonObject):
         self._favorite_numbers = []
         self._achievements = []
         self._favorite_pet = ""
-        # self._
+        self._dict_type = {}
         self._birth_date = datetime.date.today()
         self._record_created = datetime.datetime.now(pytz.utc)
 
@@ -115,7 +116,7 @@ class Person(JsonObject):
     @property
     @field()
     def age(self):
-        # we don't set the name on this field to test if the function name is used.
+        # we don't set the name on this field to tests if the function name is used.
         return self._age
 
     @age.setter
@@ -125,7 +126,7 @@ class Person(JsonObject):
     @property
     @field()
     def height(self):
-        # we don't set the name on this field to test if the function name is used.
+        # we don't set the name on this field to tests if the function name is used.
         return self._height
 
     @height.setter
@@ -186,6 +187,15 @@ class Person(JsonObject):
     @favorite_pet.setter
     def favorite_pet(self, value):
         self._favorite_pet = value
+
+    @property
+    @field(FIELD_DICT_TYPE_NAME)
+    def dict_type(self):
+        return self._dict_type
+
+    @dict_type.setter
+    def dict_type(self, value):
+        self._dict_type = value
 
     @property
     @field(FIELD_BIRTH_DATE)
@@ -289,3 +299,30 @@ class NotSerializableObject(object):
     @name.setter
     def name(self, value):
         self._name = value
+
+
+class TimeObject(JsonObject):
+    FIELD_DT_NAME = "datetime"
+    FIELD_DATE_NAME = "date"
+
+    def __init__(self):
+        self._dt = datetime.datetime.now(pytz.utc)
+        self._date = datetime.date.today()
+
+    @property
+    @field(FIELD_DT_NAME)
+    def dt(self):
+        return self._dt
+
+    @dt.setter
+    def dt(self, value):
+        self._dt = value
+
+    @property
+    @field(FIELD_DATE_NAME)
+    def date(self):
+        return self._date
+
+    @date.setter
+    def date(self, value):
+        self._date = value
