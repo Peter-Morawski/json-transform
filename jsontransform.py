@@ -162,7 +162,7 @@ class JsonObject(object):
         if not properties.keys():
             raise ConfigurationError("The class doesn't define any fields which can be serialized into JSON")
 
-        for key in properties.iterkeys():
+        for key in properties.keys():
             wrapper = properties[key].fget.__wrapped__
             property_value = properties[key].fget(self)
 
