@@ -49,7 +49,7 @@ def field(func, field_name=None, *args, **kwargs):
     :param field_name: An optional name for the field. If this is not defined the the name of the property will be used.
     """
     if not hasattr(func, _JSON_FIELD_NAME):
-        setattr(func, _JSON_FIELD_NAME, field_name or func.func_name)
+        setattr(func, _JSON_FIELD_NAME, field_name or func.__name__)
 
     return func(*args, **kwargs)
 
