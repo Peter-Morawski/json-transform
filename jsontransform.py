@@ -31,7 +31,7 @@ def field(func, field_name=None, *args, **kwargs):
             self._first_name = ""
 
         @property
-        @field("FirstName")
+        @field("firstName")
         def first_name(self):
             return self._first_name
 
@@ -46,7 +46,8 @@ def field(func, field_name=None, *args, **kwargs):
 
     :param func: The property getter function (which is decorated with @property) that should be called to get
     the value for the JSON field.
-    :param field_name: An optional name for the field. If this is not defined the the name of the property will be used.
+    :param field_name: An optional name for the field. If this is not defined the the name of the property getter will
+    be used.
     """
     if not hasattr(func, _JSON_FIELD_NAME):
         setattr(func, _JSON_FIELD_NAME, field_name or func.__name__)
@@ -96,6 +97,8 @@ class JsonObject(object):
                 self._age = value
 
         :param json_string: The string with the JSON object which should be deserialized into this object.
+        :raises ConfigurationError:
+        :raises TypeError:
         :return: An instance of this class.
         """
         d = json.loads(json_string)
@@ -106,6 +109,9 @@ class JsonObject(object):
         Serialize this object into a JSON string.
 
         :param encoding: The encoding of the string. Default utf-8
+        :raises ConfigurationError: When this class doesn't define any property getter annotated with the ``field()``
+        decorator.
+        :raises TypeError: When a field in this class couldn't be serialized.
         :return: This object serialized as a JSON string.
         """
         return json.dumps(self.to_json_dict(), encoding=encoding)
@@ -113,9 +119,13 @@ class JsonObject(object):
     @classmethod
     def from_json_file(cls, f):
         """
+        Deserialize this class from a JSON file.
 
-        :param f:
-        :return:
+        :param f: A ``.read()``-supporting file-like object containing a JSON object from which this class should be
+        deserialized.
+        :raises ConfigurationError: When this class doesn't define any JSON fields.
+        :raises TypeError: When this class didn't contain any fields defined in the JSON file.
+        :return: An instance of this class with the values of the JSON file.
         """
         d = json.load(f)
         return cls.from_json_dict(d)
@@ -126,6 +136,9 @@ class JsonObject(object):
 
         :param f: a ``.write()``-supporting file-like object.
         :param encoding: The character encoding for str instances. Default utf-8
+        :raises ConfigurationError: When this class doesn't define any property getter annotated with the ``field()``
+        decorator.
+        :raises TypeError: When a field in this class couldn't be serialized.
         """
         d = self.to_json_dict()
         json.dump(d, f, encoding=encoding)
@@ -133,9 +146,12 @@ class JsonObject(object):
     @classmethod
     def from_json_dict(cls, json_dict):
         """
+        Deserialize this class from a dict.
 
-        :param json_dict:
-        :return:
+        :param json_dict: The dict from which this class should be deserialized.
+        :raises ConfigurationError: When this class doesn't define any JSON fields.
+        :raises TypeError: When this class didn't contain any fields defined by the dict.
+        :return: An instance of this class with the values of the dict.
         """
         result = cls()
         properties = _JsonUtil.get_decorated_properties(result)
@@ -153,8 +169,9 @@ class JsonObject(object):
         """
         Serialize this object into a `dict`.
 
-        :raises ConfigurationError: When this object doesn't define any property getter annotated with the ``field()``
+        :raises ConfigurationError: When this class doesn't define any property getter annotated with the ``field()``
         decorator.
+        :raises TypeError: When a field in this class couldn't be serialized.
         :return: The `dict` representation of this object.
         """
         result = {}

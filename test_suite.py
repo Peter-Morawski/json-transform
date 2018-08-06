@@ -16,4 +16,7 @@ def create_test_suite():
 
 if __name__ == "__main__":
     runner = unittest.TextTestRunner(verbosity=2, failfast=False)
-    runner.run(create_test_suite())
+    result = runner.run(create_test_suite())
+
+    if result.failures or result.errors:
+        exit(1)
