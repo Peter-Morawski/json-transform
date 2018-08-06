@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import unittest
-from datastructure import ExtendedCar
+from .datastructure import ExtendedCar
 
 EXTENDED_CAR_DICT = {
     ExtendedCar.FIELD_MODEL_NAME_NAME: "some car model",

@@ -3,7 +3,7 @@
 import pytz
 import unittest
 import datetime
-from datastructure import Person, Color, Achievement, AchievementWithoutFields, NotSerializableObject, TimeObject, \
+from .datastructure import Person, Color, Achievement, AchievementWithoutFields, NotSerializableObject, TimeObject, \
     ExtendedCar
 from jsontransform import ConfigurationError, DATE_FORMAT, DATETIME_FORMAT, DATETIME_TZ_FORMAT
 
