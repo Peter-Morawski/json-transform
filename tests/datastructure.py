@@ -329,19 +329,24 @@ class TimeObject(JsonObject):
 
 
 class Car(JsonObject):
+    FIELD_MODEL_NAME_NAME = "modelName"
+    FIELD_MAX_SPEED_NAME = "maxSpeed"
+
     def __init__(self):
         self._model_name = ""
         self._max_speed = 0
 
     @property
-    def mode_name(self):
+    @field(FIELD_MODEL_NAME_NAME)
+    def model_name(self):
         return self._model_name
 
-    @mode_name.setter
-    def mode_name(self, value):
+    @model_name.setter
+    def model_name(self, value):
         self._model_name = value
 
     @property
+    @field(FIELD_MAX_SPEED_NAME)
     def max_speed(self):
         return self._max_speed
 
@@ -351,6 +356,17 @@ class Car(JsonObject):
 
 
 class ExtendedCar(Car):
+    FIELD_HORSEPOWER_NAME = "horsepower"
+
     def __init__(self):
         super(ExtendedCar, self).__init__()
         self._horsepower = 0
+
+    @property
+    @field()
+    def horsepower(self):
+        return self._horsepower
+
+    @horsepower.setter
+    def horsepower(self, value):
+        self._horsepower = value

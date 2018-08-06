@@ -137,7 +137,17 @@ class JsonObject(object):
         :param json_dict:
         :return:
         """
-        pass
+        result = cls()
+        properties = _JsonUtil.get_decorated_properties(result)
+        if not properties:
+            raise ConfigurationError("The class doesn't define any fields which can be serialized into JSON")
+
+        for p in properties.keys():
+            value = _JsonUtil.get_normalized_property_value(json_dict.get(p))
+            if value:
+                properties[p].fset(result, value)
+
+        return result
 
     def to_json_dict(self):
         """
@@ -158,7 +168,7 @@ class JsonObject(object):
 
             property_name = _JsonUtil.get_json_field_name(wrapper)
             if property_name:
-                result[property_name] = _JsonUtil.get_transformed_property_value(property_value)
+                result[property_name] = _JsonUtil.get_normalized_property_value(property_value)
 
         return result
 
@@ -172,7 +182,7 @@ class _JsonUtil(object):
         """
         Get all properties from an object which are annotated with the ``field()`` decorator.
 
-        :param obj: The object from which the properties should be extracted.
+        :param obj: The instance of the object from which the properties should be extracted.
         :return: A `dict` containing all properties which are decorated with the :function:`field` decorator.
         In this `dict` the key is the name of the field (how it should appear in the JSON) and the value is the
         corresponding :class:`property`.
@@ -185,8 +195,8 @@ class _JsonUtil(object):
                     member[1].fget(obj)
                     wrapper = member[1].fget.__wrapped__
 
-                    if hasattr(wrapper, _JSON_FIELD_NAME) or cls.get_json_field_name(wrapper):
-                        result[member[0]] = member[1]
+                    if cls.get_json_field_name(wrapper):
+                        result[cls.get_json_field_name(wrapper)] = member[1]
 
         return result
 
@@ -211,14 +221,14 @@ class _JsonUtil(object):
         return None
 
     @classmethod
-    def get_transformed_property_value(cls, property_value):
+    def get_normalized_property_value(cls, property_value):
         """
         Check if the value of a property is JSON serializable and if necessary transform it so that it can be
         serialized.
 
         :param property_value: The value of the property which should be checked and possibly transformed.
         :raises TypeError: When the type of the property value is not JSON serializable.
-        :return: The transformed value of the property.
+        :return: The normalized value of the property which can be serialized.
         """
         if property_value is None:
             return property_value
@@ -227,13 +237,13 @@ class _JsonUtil(object):
         elif isinstance(property_value, dict):
             result = {}
             for key in property_value.keys():
-                result[key] = cls.get_transformed_property_value(property_value[key])
+                result[key] = cls.get_normalized_property_value(property_value[key])
 
             return result
         elif cls.property_not_str_and_iterable(property_value):
             result = []
             for item in property_value:
-                result.append(cls.get_transformed_property_value(item))
+                result.append(cls.get_normalized_property_value(item))
 
             return result
         elif isinstance(property_value, JsonObject):

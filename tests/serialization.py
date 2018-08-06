@@ -3,7 +3,8 @@
 import pytz
 import unittest
 import datetime
-from datastructure import Person, Color, Achievement, AchievementWithoutFields, NotSerializableObject, TimeObject
+from datastructure import Person, Color, Achievement, AchievementWithoutFields, NotSerializableObject, TimeObject, \
+    ExtendedCar
 from jsontransform import ConfigurationError, DATE_FORMAT, DATETIME_FORMAT, DATETIME_TZ_FORMAT
 
 JOHN_FIRST_NAME = "John"
@@ -360,6 +361,14 @@ class DictSerialization(unittest.TestCase):
     def test_with_some_decorator_after_field_decorator(self):
         actual = self._john.to_json_dict()
         assert Person.FIELD_FAVORITE_PET_NAME in actual.keys()
+
+    def test_if_inherits_fields(self):
+        extended_car = ExtendedCar()
+        actual = extended_car.to_json_dict()
+
+        assert ExtendedCar.FIELD_HORSEPOWER_NAME in actual.keys()
+        assert ExtendedCar.FIELD_MODEL_NAME_NAME in actual.keys()
+        assert ExtendedCar.FIELD_MAX_SPEED_NAME in actual.keys()
 
 
 class DictSerializationWithTimes(unittest.TestCase):
