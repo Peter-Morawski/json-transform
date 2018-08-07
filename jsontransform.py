@@ -206,7 +206,7 @@ class _JsonUtil(object):
         Get all properties from an object which are annotated with the ``field()`` decorator.
 
         :param obj: The instance of the object from which the properties should be extracted.
-        :return: A `dict` containing all properties which are decorated with the :function:`field` decorator.
+        :return: A `dict` containing all properties which are decorated with the :func:`field` decorator.
         In this `dict` the key is the name of the field (how it should appear in the JSON) and the value is the
         corresponding :class:`property`.
         """

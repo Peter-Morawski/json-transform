@@ -4,7 +4,7 @@ Json Transform allows you to simply serialize your Python objects into a JSON fo
 
 New? Here is some help:
 
-* [Getting Started](#)
+* [Getting Started](https://json-transform.readthedocs.io/en/latest/getting-started.html#getting-started)
 
 ### Example
 
@@ -82,4 +82,4 @@ customer.first_name
 
 ### More
 
-Check out the [documentation](#).
+Check out the [documentation](https://json-transform.readthedocs.io/en/latest/).
