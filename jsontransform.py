@@ -1,14 +1,20 @@
 # -*- coding: utf-8 -*-
 
+import re
 import json
 import inspect
 import datetime
 import collections
 from decorator import decorator
+from dateutil import parser
 
 DATE_FORMAT = "%Y-%m-%d"
 DATETIME_TZ_FORMAT = "%Y-%m-%dT%H:%M:%S%z"
 DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
+
+_DATE_FORMAT_REGEX = r"^[0-9]{4}-[0-9]{1,}-[0-9]{1,}$"
+_DATETIME_TZ_FORMAT_REGEX = r"^[0-9]{4}-[0-9]{1,}-[0-9]{1,}T[0-9]{2}:[0-9]{2}:[0-9]{2}\+[0-9]{4}$"
+_DATETIME_FORMAT_REGEX = r"^[0-9]{4}-[0-9]{1,}-[0-9]{1,}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
 
 _JSON_FIELD_NAME = "_json_field_name"
 
@@ -157,10 +163,12 @@ class JsonObject(object):
         properties = _JsonUtil.get_decorated_properties(result)
         if not properties:
             raise ConfigurationError("The class doesn't define any fields which can be serialized into JSON")
+        if all(properties.get(key) is None for key in json_dict.keys()):
+            raise TypeError("No matching fields found to build this class")
 
         for p in properties.keys():
-            value = _JsonUtil.get_normalized_property_value(json_dict.get(p))
-            if value:
+            value = _JsonUtil.reverse_normalized_property_value(json_dict.get(p))
+            if value is not None:
                 properties[p].fset(result, value)
 
         return result
@@ -169,8 +177,7 @@ class JsonObject(object):
         """
         Serialize this object into a `dict`.
 
-        :raises ConfigurationError: When this class doesn't define any property getter annotated with the ``field()``
-        decorator.
+        :raises ConfigurationError: When this class doesn't define any property getter annotated with the ``field()`` decorator.
         :raises TypeError: When a field in this class couldn't be serialized.
         :return: The `dict` representation of this object.
         """
@@ -183,9 +190,8 @@ class JsonObject(object):
             wrapper = properties[key].fget.__wrapped__
             property_value = properties[key].fget(self)
 
-            property_name = _JsonUtil.get_json_field_name(wrapper)
-            if property_name:
-                result[property_name] = _JsonUtil.get_normalized_property_value(property_value)
+            if key:
+                result[key] = _JsonUtil.get_normalized_value(property_value)
 
         return result
 
@@ -238,64 +244,133 @@ class _JsonUtil(object):
         return None
 
     @classmethod
-    def get_normalized_property_value(cls, property_value):
+    def get_normalized_value(cls, value):
         """
-        Check if the value of a property is JSON serializable and if necessary transform it so that it can be
-        serialized.
+        Check if a value is JSON serializable and if necessary normalize/transform it so that it can be serialized.
 
-        :param property_value: The value of the property which should be checked and possibly transformed.
-        :raises TypeError: When the type of the property value is not JSON serializable.
-        :return: The normalized value of the property which can be serialized.
+        :param value: The value which should be checked and possibly normalized/transformed.
+        :raises TypeError: When the type of the value is not JSON serializable.
+        :return: The normalized value which can be serialized.
         """
-        if property_value is None:
-            return property_value
-        elif cls.property_is_simple_type(property_value):
-            return property_value
-        elif isinstance(property_value, dict):
+        if value is None:
+            return value
+        elif cls.value_is_simple_type(value):
+            return value
+        elif isinstance(value, dict):
             result = {}
-            for key in property_value.keys():
-                result[key] = cls.get_normalized_property_value(property_value[key])
+            for key in value.keys():
+                result[key] = cls.get_normalized_value(value[key])
 
             return result
-        elif cls.property_not_str_and_iterable(property_value):
+        elif cls.value_not_str_and_iterable(value):
             result = []
-            for item in property_value:
-                result.append(cls.get_normalized_property_value(item))
+            for item in value:
+                result.append(cls.get_normalized_value(item))
 
             return result
-        elif isinstance(property_value, JsonObject):
-            return property_value.to_json_dict()
-        elif isinstance(property_value, datetime.datetime):
-            if property_value.tzinfo:
-                return property_value.strftime(DATETIME_TZ_FORMAT)
+        elif isinstance(value, JsonObject):
+            return value.to_json_dict()
+        elif isinstance(value, datetime.datetime):
+            if value.tzinfo:
+                return value.strftime(DATETIME_TZ_FORMAT)
             else:
-                return property_value.strftime(DATETIME_FORMAT)
-        elif isinstance(property_value, datetime.date):
-            return property_value.strftime(DATE_FORMAT)
+                return value.strftime(DATETIME_FORMAT)
+        elif isinstance(value, datetime.date):
+            return value.strftime(DATE_FORMAT)
         else:
-            raise TypeError("The object type `{}` is not JSON serializable".format(type(property_value)))
+            raise TypeError("The object type `{}` is not JSON serializable".format(type(value)))
 
     @classmethod
-    def property_is_simple_type(cls, property_value):
+    def reverse_normalized_property_value(cls, normalized_value):
+        """
+        Reverse the normalization of a value e.g. from a date string like '2018-08-09' create a :class:`datetime.date`
+        or for a given `dict` search the appropriate :class:`JsonObject` and return the object with values from the
+        `dict`. See also `get_normalized_value()`
+
+        :param normalized_value: The value of which the normalization should be reversed.
+        :raises TypeError: When the normalization of the value cannot be reversed.
+        :raises ValueError: When a passed value did not match the expectations e.g. datetime.date day was 90
+        :return:
+        """
+        if normalized_value is None:
+            return normalized_value
+        elif cls.value_is_simple_type(normalized_value):
+            if type(normalized_value) is str:
+                if re.match(_DATE_FORMAT_REGEX, normalized_value):
+                    return datetime.datetime.strptime(normalized_value, DATE_FORMAT).date()
+                elif re.match(_DATETIME_FORMAT_REGEX, normalized_value):
+                    return datetime.datetime.strptime(normalized_value, DATETIME_FORMAT)
+                elif re.match(_DATETIME_TZ_FORMAT_REGEX, normalized_value):
+                    return parser.isoparse(normalized_value)
+
+            return normalized_value
+        elif isinstance(normalized_value, dict):
+            most_matching_json_object = cls.get_most_matching_json_object(normalized_value)
+            if most_matching_json_object:
+                return most_matching_json_object.from_json_dict(normalized_value)
+
+            return normalized_value
+        elif cls.value_not_str_and_iterable(normalized_value):
+            return normalized_value
+        else:
+            raise TypeError("The normalization for the object type `{}` cannot be reversed"
+                            .format(type(normalized_value)))
+
+    @classmethod
+    def value_is_simple_type(cls, value):
         """
         Check if a property has a simple type which can be simply serialized without any further work.
 
-        :param property_value: The property value which should be checked.
-        :return: `True` if the properties value type is simple; `False` otherwise.
+        :param value: The value which should be checked.
+        :return: `True` if the values type is simple; `False` otherwise.
         """
         return (
-            type(property_value) == str or
-            type(property_value) == int or
-            type(property_value) == float
+                type(value) is str or
+                type(value) is int or
+                type(value) is float
         )
 
     @classmethod
-    def property_not_str_and_iterable(cls, property_value):
+    def value_not_str_and_iterable(cls, value):
         """
         Check if a property of a class is iterable and **NOT** a `str`.
 
-        :param property_value: The property value which should be checked.
-        :return: `True` if the property value is iterable and NOT a `str`; `False`otherwise.
+        :param value: The value which should be checked.
+        :return: `True` if the value is iterable and **NOT** a `str`; `False` otherwise.
         """
-        return type(property_value) is not str and isinstance(property_value, collections.Iterable)
+        return type(value) is not str and isinstance(value, collections.Iterable)
+
+    @classmethod
+    def get_most_matching_json_object(cls, value):
+        """
+        Given a `dict` check which :class:`JsonObject` matches it the most.
+
+        :param value: The `dict` for which the :class:`JsonObject` should be searched.
+        :return: The :class:`JsonObject` which matched mostly with the given `dict`; `None` if none of the objects did
+        match.
+        """
+        key_occurrences = "occurrences"
+        key_object = "object"
+        matching_objects = []
+
+        for json_object in JsonObject.__subclasses__():
+            occurrences = 0
+            properties = cls.get_decorated_properties(json_object())
+
+            for value_property in value.keys():
+                for object_property in properties.keys():
+                    if value_property == object_property:
+                        occurrences += 1
+                        break
+
+            if occurrences:
+                matching_objects.append({
+                    key_occurrences: occurrences,
+                    key_object: json_object
+                })
+
+        if matching_objects:
+            return sorted(matching_objects, key=lambda x: x[key_occurrences], reverse=True)[0][key_object]
+
+        return None
 

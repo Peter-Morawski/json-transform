@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 
-import pytz
 import unittest
 import datetime
 from .datastructure import Person, Color, Achievement, AchievementWithoutFields, NotSerializableObject, TimeObject, \
     ExtendedCar
 from jsontransform import ConfigurationError, DATE_FORMAT, DATETIME_FORMAT, DATETIME_TZ_FORMAT
+from dateutil import tz
 
 JOHN_FIRST_NAME = "John"
 JOHN_LAST_NAME = "Doe"
@@ -411,7 +411,7 @@ class DictSerializationWithTimes(unittest.TestCase):
         self._datetime_timezone_helper("Asia/Tokyo", "+0900")
 
     def _datetime_timezone_helper(self, timezone_name, utc_offset):
-        dt = datetime.datetime.now(pytz.timezone(timezone_name))
+        dt = datetime.datetime.now(tz.gettz(timezone_name))
         self._time_obj.dt = dt
 
         expected = dt.strftime(DATETIME_TZ_FORMAT)

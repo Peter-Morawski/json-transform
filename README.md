@@ -17,7 +17,7 @@ from jsontransform import field, JsonObject
 class Customer(JsonObject):
     def __init__(self):
         self._first_name = ""
-        self._age = ""
+        self._age = 0
     
     # set a custom name for the field becuase by default it will be the function name
     @property

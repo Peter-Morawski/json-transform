@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
-import pytz
 import datetime
 from jsontransform import JsonObject, field
 from decorator import decorator
+from dateutil import tz
 
 
 @decorator
@@ -83,7 +83,7 @@ class Person(JsonObject):
         self._favorite_pet = ""
         self._dict_type = {}
         self._birth_date = datetime.date.today()
-        self._record_created = datetime.datetime.now(pytz.utc)
+        self._record_created = datetime.datetime.now(tz.gettz("UTC"))
 
     @property
     @field(FIELD_FIRST_NAME)
@@ -306,7 +306,7 @@ class TimeObject(JsonObject):
     FIELD_DATE_NAME = "date"
 
     def __init__(self):
-        self._dt = datetime.datetime.now(pytz.utc)
+        self._dt = datetime.datetime.now(tz.gettz("UTC"))
         self._date = datetime.date.today()
 
     @property
@@ -370,3 +370,19 @@ class ExtendedCar(Car):
     @horsepower.setter
     def horsepower(self, value):
         self._horsepower = value
+
+
+class SimpleJsonObjectHolder(JsonObject):
+    FIELD_INNER_JSON_OBJECT_NAME = "innerJsonObject"
+
+    def __init__(self):
+        self._inner_json_object = Color()
+
+    @property
+    @field(FIELD_INNER_JSON_OBJECT_NAME)
+    def inner_json_object(self):
+        return self._inner_json_object
+
+    @inner_json_object.setter
+    def inner_json_object(self, value):
+        self._inner_json_object = value
