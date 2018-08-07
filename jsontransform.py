@@ -110,17 +110,16 @@ class JsonObject(object):
         d = json.loads(json_string)
         return cls.from_json_dict(d)
 
-    def to_json_string(self, encoding="utf-8"):
+    def to_json_string(self):
         """
         Serialize this object into a JSON string.
 
-        :param encoding: The encoding of the string. Default utf-8
         :raises ConfigurationError: When this class doesn't define any property getter annotated with the ``field()``
         decorator.
         :raises TypeError: When a field in this class couldn't be serialized.
         :return: This object serialized as a JSON string.
         """
-        return json.dumps(self.to_json_dict(), encoding=encoding)
+        return json.dumps(self.to_json_dict())
 
     @classmethod
     def from_json_file(cls, f):
@@ -136,18 +135,17 @@ class JsonObject(object):
         d = json.load(f)
         return cls.from_json_dict(d)
 
-    def to_json_file(self, f, encoding="utf-8"):
+    def to_json_file(self, f):
         """
         Serialize this object into a file.
 
         :param f: a ``.write()``-supporting file-like object.
-        :param encoding: The character encoding for str instances. Default utf-8
         :raises ConfigurationError: When this class doesn't define any property getter annotated with the ``field()``
         decorator.
         :raises TypeError: When a field in this class couldn't be serialized.
         """
         d = self.to_json_dict()
-        json.dump(d, f, encoding=encoding)
+        json.dump(d, f)
 
     @classmethod
     def from_json_dict(cls, json_dict):
