@@ -288,7 +288,7 @@ class _JsonUtil(object):
         :param normalized_value: The value of which the normalization should be reversed.
         :raises TypeError: When the normalization of the value cannot be reversed.
         :raises ValueError: When a passed value did not match the expectations e.g. datetime.date day was 90
-        :return:
+        :return: The reversed value of the normalized field.
         """
         if normalized_value is None:
             return normalized_value
