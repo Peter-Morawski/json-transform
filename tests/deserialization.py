@@ -1,148 +1,229 @@
 # -*- coding: utf-8 -*-
 
+import time
 import unittest
 import datetime
-from .datastructure import ExtendedCar, SimpleJsonObjectHolder, Color, Car, TimeObject
-
-EXTENDED_CAR_DICT = {
-    ExtendedCar.FIELD_MODEL_NAME_NAME: "some car model",
-    ExtendedCar.FIELD_MAX_SPEED_NAME: 130,
-    ExtendedCar.FIELD_HORSEPOWER_NAME: 30
-}
-
-SIMPLE_JSON_OBJECT_HOLDER_COLOR_DICT = {
-    SimpleJsonObjectHolder.FIELD_INNER_JSON_OBJECT_NAME: {
-        Color.FIELD_R_NAME: 125,
-        Color.FIELD_G_NAME: 199,
-        Color.FIELD_B_NAME: 16
-    }
-}
-
-SIMPLE_JSON_OBJECT_HOLDER_UNKNOWN_INNER_DICT = {
-    SimpleJsonObjectHolder.FIELD_INNER_JSON_OBJECT_NAME: {
-    }
-}
-
-SIMPLE_JSON_OBJECT_HOLDER_NESTED_DICT = {
-    SimpleJsonObjectHolder.FIELD_INNER_JSON_OBJECT_NAME: {
-        SimpleJsonObjectHolder.FIELD_INNER_JSON_OBJECT_NAME: {
-            SimpleJsonObjectHolder.FIELD_INNER_JSON_OBJECT_NAME: {
-                Color.FIELD_R_NAME: 123,
-                Color.FIELD_G_NAME: 200,
-                Color.FIELD_B_NAME: 112
-            }
-        }
-    }
-}
+from jsontransform import ConfigurationError
+from .datastructure import ExtendedCar, Car, Container, JsonObjectWithoutFields
 
 
 class DictDeserialization(unittest.TestCase):
-    def test_extended_car(self):
-        extended_car = ExtendedCar.from_json_dict(EXTENDED_CAR_DICT)
+    def test_if_dict_is_casted_into_json_object(self):
+        d = {
+            Container.CONTAINER_FIELD_NAME: "some value"
+        }
+        actual = Container.from_json_dict(d)
+        assert type(actual) is Container
 
-        self.assertIsNotNone(extended_car)
-        assert type(extended_car) is ExtendedCar
-        assert extended_car.model_name == EXTENDED_CAR_DICT[ExtendedCar.FIELD_MODEL_NAME_NAME]
-        assert extended_car.max_speed == EXTENDED_CAR_DICT[ExtendedCar.FIELD_MAX_SPEED_NAME]
-        assert extended_car.horsepower == EXTENDED_CAR_DICT[ExtendedCar.FIELD_HORSEPOWER_NAME]
-
-    def test_super_class_of_extended_car(self):
-        car = Car.from_json_dict(EXTENDED_CAR_DICT)
-
-        self.assertIsNotNone(car)
-        assert type(car) is Car
-        assert car.model_name == EXTENDED_CAR_DICT[Car.FIELD_MODEL_NAME_NAME]
-        assert car.max_speed == EXTENDED_CAR_DICT[Car.FIELD_MAX_SPEED_NAME]
-
-    def test_with_json_object(self):
-        simple_json_object_holder = SimpleJsonObjectHolder.from_json_dict(SIMPLE_JSON_OBJECT_HOLDER_COLOR_DICT)
-
-        self.assertIsNotNone(simple_json_object_holder)
-        assert type(simple_json_object_holder) is SimpleJsonObjectHolder
-
-        self.assertIsNotNone(simple_json_object_holder.inner_json_object)
-        assert type(simple_json_object_holder.inner_json_object) is Color
-
-        inner_json_object = SIMPLE_JSON_OBJECT_HOLDER_COLOR_DICT[SimpleJsonObjectHolder.FIELD_INNER_JSON_OBJECT_NAME]
-        assert simple_json_object_holder.inner_json_object.r == inner_json_object[Color.FIELD_R_NAME]
-        assert simple_json_object_holder.inner_json_object.g == inner_json_object[Color.FIELD_G_NAME]
-        assert simple_json_object_holder.inner_json_object.b == inner_json_object[Color.FIELD_B_NAME]
-
-    def test_with_wrong_dict(self):
+    def test_empty_dict(self):
         with self.assertRaises(TypeError):
-            Color.from_json_dict(EXTENDED_CAR_DICT)
+            Container.from_json_dict({})
 
-    def test_with_inner_unknown_dict(self):
-        simple_json_object_holder = SimpleJsonObjectHolder.from_json_dict(SIMPLE_JSON_OBJECT_HOLDER_UNKNOWN_INNER_DICT)
-
-        self.assertIsNotNone(simple_json_object_holder)
-        assert type(simple_json_object_holder) is SimpleJsonObjectHolder
-
-        self.assertIsNotNone(simple_json_object_holder.inner_json_object)
-        assert type(simple_json_object_holder.inner_json_object) is dict
-
-    def test_with_empty_dict(self):
+    def test_none_instead_of_dict(self):
         with self.assertRaises(TypeError):
-            SimpleJsonObjectHolder.from_json_dict({})
+            Container.from_json_dict(None)
 
-    def test_nested_json_objects(self):
-        simple_json_object_holder = SimpleJsonObjectHolder.from_json_dict(SIMPLE_JSON_OBJECT_HOLDER_NESTED_DICT)
+    def test_empty_dict_as_value(self):
+        d = {
+            Container.CONTAINER_FIELD_NAME: {}
+        }
+        actual = Container.from_json_dict(d)
+        self.assertEqual(d[Container.CONTAINER_FIELD_NAME], actual.container)
 
-        self.assertIsNotNone(simple_json_object_holder)
-        assert type(simple_json_object_holder) is SimpleJsonObjectHolder
+    def test_none(self):
+        d = {
+            Container.CONTAINER_FIELD_NAME: None
+        }
+        actual = Container.from_json_dict(d)
+        self.assertEqual(d[Container.CONTAINER_FIELD_NAME], actual.container)
 
-        inner = SimpleJsonObjectHolder.FIELD_INNER_JSON_OBJECT_NAME
-        color_dict = SIMPLE_JSON_OBJECT_HOLDER_NESTED_DICT[inner][inner][inner]
+    def test_str(self):
+        d = {
+            Container.CONTAINER_FIELD_NAME: "some string"
+        }
+        actual = Container.from_json_dict(d)
+        self.assertEqual(d[Container.CONTAINER_FIELD_NAME], actual.container)
 
-        self.assertIsNotNone(simple_json_object_holder.inner_json_object)
-        assert type(simple_json_object_holder.inner_json_object) is SimpleJsonObjectHolder
+    def test_int(self):
+        d = {
+            Container.CONTAINER_FIELD_NAME: 42
+        }
+        actual = Container.from_json_dict(d)
+        self.assertEqual(d[Container.CONTAINER_FIELD_NAME], actual.container)
 
-        self.assertIsNotNone(simple_json_object_holder.inner_json_object.inner_json_object)
-        assert type(simple_json_object_holder.inner_json_object.inner_json_object) is SimpleJsonObjectHolder
+    def test_float(self):
+        d = {
+            Container.CONTAINER_FIELD_NAME: 42.1337
+        }
+        actual = Container.from_json_dict(d)
+        self.assertEqual(d[Container.CONTAINER_FIELD_NAME], actual.container)
 
-        self.assertIsNotNone(simple_json_object_holder.inner_json_object.inner_json_object.inner_json_object)
-        assert type(simple_json_object_holder.inner_json_object.inner_json_object.inner_json_object) is Color
+    def test_json_object(self):
+        d = {
+            Container.CONTAINER_FIELD_NAME: {
+                Container.CONTAINER_FIELD_NAME: "some string"
+            }
+        }
+        actual = Container.from_json_dict(d)
+        assert type(actual.container) is Container
 
-        color = simple_json_object_holder.inner_json_object.inner_json_object.inner_json_object
-        assert color.r == color_dict[Color.FIELD_R_NAME]
-        assert color.g == color_dict[Color.FIELD_G_NAME]
-        assert color.b == color_dict[Color.FIELD_B_NAME]
+    def test_json_object_without_fields(self):
+        d = {
+            Container.CONTAINER_FIELD_NAME: "some string"
+        }
+
+        with self.assertRaises(ConfigurationError):
+            JsonObjectWithoutFields.from_json_dict(d)
+
+    def test_wrong_json_object(self):
+        d = {
+            Container.CONTAINER_FIELD_NAME: "some string"
+        }
+
+        with self.assertRaises(TypeError):
+            ExtendedCar.from_json_dict(d)
+
+    def test_not_deserializable_object(self):
+        d = {
+            Container.CONTAINER_FIELD_NAME: Container()
+        }
+
+        with self.assertRaises(TypeError):
+            Container.from_json_dict(d)
+
+    def test_empty_list(self):
+        d = {
+            Container.CONTAINER_FIELD_NAME: []
+        }
+        actual = Container.from_json_dict(d)
+        self.assertEqual(d[Container.CONTAINER_FIELD_NAME], actual.container)
+
+    def test_list_with_none(self):
+        d = {
+            Container.CONTAINER_FIELD_NAME: [None, None, None]
+        }
+        actual = Container.from_json_dict(d)
+        self.assertEqual(d[Container.CONTAINER_FIELD_NAME], actual.container)
+
+    def test_list_with_empty_dict(self):
+        d = {
+            Container.CONTAINER_FIELD_NAME: [{}]
+        }
+        actual = Container.from_json_dict(d)
+        self.assertEqual(d[Container.CONTAINER_FIELD_NAME], actual.container)
+
+    def test_list_with_str(self):
+        d = {
+            Container.CONTAINER_FIELD_NAME: ["some string", "another string", "aaaaaa strriiiiinggg"]
+        }
+        actual = Container.from_json_dict(d)
+        self.assertEqual(d[Container.CONTAINER_FIELD_NAME], actual.container)
+
+    def test_list_with_int(self):
+        d = {
+            Container.CONTAINER_FIELD_NAME: [1, 2, 3, 4, 5, 6]
+        }
+        actual = Container.from_json_dict(d)
+        self.assertEqual(d[Container.CONTAINER_FIELD_NAME], actual.container)
+
+    def test_list_with_float(self):
+        d = {
+            Container.CONTAINER_FIELD_NAME: [1.123, 2.234, 3.345, 4.456]
+        }
+        actual = Container.from_json_dict(d)
+        self.assertEqual(d[Container.CONTAINER_FIELD_NAME], actual.container)
+
+    def test_list_with_json_object(self):
+        d = {
+            Container.CONTAINER_FIELD_NAME: [
+                {
+                    Container.CONTAINER_FIELD_NAME: "some string"
+                },
+                {
+                    Container.CONTAINER_FIELD_NAME: 1
+                }
+            ]
+        }
+        actual = Container.from_json_dict(d)
+
+        assert all(type(item) is Container for item in actual.container)
+
+        expected = [Container.from_json_dict(item) for item in d[Container.CONTAINER_FIELD_NAME]]
+        for item in expected:
+            assert any(item.container == actual_item.container for actual_item in actual.container)
+
+    def test_list_with_not_deserializable_object(self):
+        d = {
+            Container.CONTAINER_FIELD_NAME: [Container()]
+        }
+
+        with self.assertRaises(TypeError):
+            Container.from_json_dict(d)
+
+    def test_list_with_list(self):
+        d = {
+            Container.CONTAINER_FIELD_NAME: [[], [1, 2, 3], ["some string", "another string"]]
+        }
+        actual = Container.from_json_dict(d)
+        self.assertEqual(d[Container.CONTAINER_FIELD_NAME], actual.container)
+
+    def test_list_with_dict(self):
+        d = {
+            Container.CONTAINER_FIELD_NAME: [{"key1": "some value", "key2": 1}, {"key1": 42}]
+        }
+        actual = Container.from_json_dict(d)
+        self.assertListEqual(d[Container.CONTAINER_FIELD_NAME], actual.container)
+
+    def test_super_class_of_json_object(self):
+        d = {
+            ExtendedCar.FIELD_MODEL_NAME_NAME: "some car model",
+            ExtendedCar.FIELD_MAX_SPEED_NAME: 130,
+            ExtendedCar.FIELD_HORSEPOWER_NAME: 30
+        }
+        actual = Car.from_json_dict(d)
+
+        assert type(actual) is Car
+        self.assertEqual(d[Car.FIELD_MODEL_NAME_NAME], actual.model_name)
+        self.assertEqual(d[Car.FIELD_MAX_SPEED_NAME], actual.max_speed)
 
 
 class DictDeserializationTimes(unittest.TestCase):
+    DATE = "2018-08-13"
+    TIME = "16:00:00"
+
     def test_date(self):
         d = {
-            TimeObject.FIELD_DATE_NAME: "2018-08-06"
+            Container.CONTAINER_FIELD_NAME: self.DATE
         }
-        time_object = TimeObject.from_json_dict(d)
+        actual = Container.from_json_dict(d)
 
-        self.assertIsNotNone(time_object)
-        assert type(time_object) is TimeObject
+        assert type(actual) is Container
+        assert type(actual.container) is datetime.date
+        assert type(actual.container) is not datetime.datetime
 
-        self.assertIsNotNone(time_object.date)
-        assert type(time_object.date) is datetime.date
-        assert time_object.date.year == 2018
-        assert time_object.date.month == 8
-        assert time_object.date.day == 6
+        self._assert_date_equal(actual.container)
+
+    def _assert_date_equal(self, d):
+        self.assertEqual(2018, d.year)
+        self.assertEqual(8, d.month)
+        self.assertEqual(13, d.day)
 
     def test_naive_datetime(self):
         d = {
-            TimeObject.FIELD_DT_NAME: "2018-08-06T18:00:00Z"
+            Container.CONTAINER_FIELD_NAME: "{}T{}Z".format(self.DATE, self.TIME)
         }
-        time_object = TimeObject.from_json_dict(d)
+        actual = Container.from_json_dict(d)
 
-        self.assertIsNotNone(time_object)
-        assert type(time_object) is TimeObject
+        assert type(actual) is Container
+        assert type(actual.container) is datetime.datetime
 
-        self.assertIsNotNone(time_object.dt)
-        assert type(time_object.dt) is datetime.datetime
-        assert time_object.dt.year == 2018
-        assert time_object.dt.month == 8
-        assert time_object.dt.day == 6
-        assert time_object.dt.hour == 18
-        assert time_object.dt.minute == 0
-        assert time_object.dt.second == 0
-        self.assertIsNone(time_object.dt.tzinfo)
+        self._assert_datetime_equal(actual.container)
+
+    def _assert_datetime_equal(self, d):
+        self._assert_date_equal(d)
+        self.assertEqual(16, d.hour)
+        self.assertEqual(0, d.minute)
+        self.assertEqual(0, d.second)
 
     def test_utc_datetime(self):
         self._datetime_timezone_helper("+0000", 0)
@@ -159,93 +240,135 @@ class DictDeserializationTimes(unittest.TestCase):
     def test_tokyo_datetime(self):
         self._datetime_timezone_helper("+0900", 9)
 
-    def test_broken_naive_datetime_without_year(self):
+    def test_new_york_datetime(self):
+        self._datetime_timezone_helper(
+            "-0500" if time.localtime().tm_isdst == 0 else "-0400",
+            -5 if time.localtime().tm_isdst == 0 else -4
+        )
+
+    def _datetime_timezone_helper(self, utc_offset, utc_offset_hours):
         d = {
-            TimeObject.FIELD_DT_NAME: "08-06T18:00:00Z"
+            Container.CONTAINER_FIELD_NAME: "{}T{}{}".format(self.DATE, self.TIME, utc_offset)
         }
-        self._broken_timezone_datetime_helper(d)
+        actual = Container.from_json_dict(d)
 
-    def test_broken_naive_datetime_without_month_or_day(self):
+        assert type(actual.container) is datetime.datetime
+        self._assert_datetime_equal(actual.container)
+        self.assertIsNotNone(actual.container.tzinfo)
+
+        self._check_datetime_utc_offset(actual.container, utc_offset_hours)
+
+    def _check_datetime_utc_offset(self, dt, expected_offset_hours):
+        utc_offset = dt.tzinfo.utcoffset(dt)
+
+        if utc_offset.days == -1:
+            actual_offset = utc_offset.seconds if utc_offset.seconds == 0 else ((utc_offset.seconds / 60) / 60) - 24
+        else:
+            actual_offset = utc_offset.seconds if utc_offset.seconds == 0 else (utc_offset.seconds / 60) / 60
+        assert actual_offset == expected_offset_hours
+
+    def test_naive_datetime_with_missing_date_character(self):
         d = {
-            TimeObject.FIELD_DT_NAME: "2018-06T18:00:00Z"
+            Container.CONTAINER_FIELD_NAME: "{}{}Z".format(self.DATE, self.TIME)
         }
-        self._broken_timezone_datetime_helper(d)
+        actual = Container.from_json_dict(d)
 
-    def test_broken_naive_datetime_without_time_separator(self):
+        assert type(actual.container) is str
+
+    def test_naive_datetime_with_missing_time_character(self):
         d = {
-            TimeObject.FIELD_DT_NAME: "2018-08-06 18:00:00Z"
+            Container.CONTAINER_FIELD_NAME: "{}T{}".format(self.DATE, self.TIME)
         }
-        self._broken_timezone_datetime_helper(d)
+        actual = Container.from_json_dict(d)
 
-    def test_broken_naive_datetime_without_hour_minute_or_second(self):
+        assert type(actual.container) is str
+
+    def test_datetime_with_timezone_with_missing_timezone_character(self):
         d = {
-            TimeObject.FIELD_DT_NAME: "2018-08-06T00:00Z"
+            Container.CONTAINER_FIELD_NAME: "{}T{}0000".format(self.DATE, self.TIME)
         }
-        self._broken_timezone_datetime_helper(d)
+        actual = Container.from_json_dict(d)
 
-    def test_broken_naive_datetime_without_hour_separator(self):
+        assert type(actual.container) is str
+
+    def test_list_with_date(self):
         d = {
-            TimeObject.FIELD_DT_NAME: "2018-08-06T18:00:00"
+            Container.CONTAINER_FIELD_NAME: [self.DATE]
         }
-        self._broken_timezone_datetime_helper(d)
+        actual = Container.from_json_dict(d)
 
-    def test_broken_datetime_broken_timezone_without_plus(self):
+        assert len(actual.container) == 1
+        assert type(actual.container[0]) is datetime.date
+        assert type(actual.container[0]) is not datetime.datetime
+        self._assert_date_equal(actual.container[0])
+
+    def test_list_with_naive_datetime(self):
         d = {
-            TimeObject.FIELD_DT_NAME: "2018-08-06T18:00:00Z0000"
+            Container.CONTAINER_FIELD_NAME: ["{}T{}Z".format(self.DATE, self.TIME)]
         }
-        self._broken_timezone_datetime_helper(d)
+        actual = Container.from_json_dict(d)
 
-    def test_broken_datetime_broken_timezone_1(self):
+        assert len(actual.container) == 1
+        assert type(actual.container[0]) is datetime.datetime
+        self._assert_datetime_equal(actual.container[0])
+
+    def test_list_with_utc_datetime(self):
+        self._list_with_datetime_with_timezone_helper("+0000", 0)
+
+    def test_list_with_berlin_datetime(self):
+        self._list_with_datetime_with_timezone_helper("+0200", 2)
+
+    def test_list_with_london_datetime(self):
+        self._list_with_datetime_with_timezone_helper("+0100", 1)
+
+    def test_list_with_istanbul_datetime(self):
+        self._list_with_datetime_with_timezone_helper("+0300", 3)
+
+    def test_list_with_tokyo_datetime(self):
+        self._list_with_datetime_with_timezone_helper("+0900", 9)
+
+    def test_list_with_new_york_datetime(self):
+        self._list_with_datetime_with_timezone_helper(
+            "-0500" if time.localtime().tm_isdst == 0 else "-0400",
+            -5 if time.localtime().tm_isdst == 0 else -4
+        )
+
+    def _list_with_datetime_with_timezone_helper(self, utc_offset, utc_offset_hours):
         d = {
-            TimeObject.FIELD_DT_NAME: "2018-08-06T18:00:00Z+000"
+            Container.CONTAINER_FIELD_NAME: ["{}T{}{}".format(self.DATE, self.TIME, utc_offset)]
         }
-        self._broken_timezone_datetime_helper(d)
+        actual = Container.from_json_dict(d)
 
-    def test_broken_datetime_broken_timezone_2(self):
+        assert len(actual.container) == 1
+        assert type(actual.container[0]) is datetime.datetime
+        self._assert_datetime_equal(actual.container[0])
+        self.assertIsNotNone(actual.container[0].tzinfo)
+
+        self._check_datetime_utc_offset(actual.container[0], utc_offset_hours)
+
+    def test_list_with_broken_naive_datetime_with_missing_date_character(self):
         d = {
-            TimeObject.FIELD_DT_NAME: "2018-08-06T18:00:00Z+00"
+            Container.CONTAINER_FIELD_NAME: ["{}{}Z".format(self.DATE, self.TIME)]
         }
-        self._broken_timezone_datetime_helper(d)
+        actual = Container.from_json_dict(d)
 
-    def test_broken_datetime_broken_timezone_3(self):
+        assert len(actual.container) == 1
+        assert type(actual.container[0]) is str
+
+    def test_list_with_broken_naive_datetime_with_missing_time_character(self):
         d = {
-            TimeObject.FIELD_DT_NAME: "2018-08-06T18:00:00Z+0"
+            Container.CONTAINER_FIELD_NAME: ["{}T{}".format(self.DATE, self.TIME)]
         }
-        self._broken_timezone_datetime_helper(d)
+        actual = Container.from_json_dict(d)
 
-    def test_broken_datetime_broken_timezone_only_plus(self):
+        assert len(actual.container) == 1
+        assert type(actual.container[0]) is str
+
+    def test_list_with_broken_datetime_with_timezone_with_missing_timezone_character(self):
         d = {
-            TimeObject.FIELD_DT_NAME: "2018-08-06T18:00:00Z+"
+            Container.CONTAINER_FIELD_NAME: ["{}T{}{}".format(self.DATE, self.TIME, "0000")]
         }
-        self._broken_timezone_datetime_helper(d)
+        actual = Container.from_json_dict(d)
 
-    def _datetime_timezone_helper(self, utc_offset, utc_offset_int):
-        d = {
-            TimeObject.FIELD_DT_NAME: "2018-08-06T18:00:00" + utc_offset
-        }
-        time_object = TimeObject.from_json_dict(d)
-
-        self.assertIsNotNone(time_object)
-        assert type(time_object) is TimeObject
-
-        self.assertIsNotNone(time_object.dt)
-        assert type(time_object.dt) is datetime.datetime
-        assert time_object.dt.year == 2018
-        assert time_object.dt.month == 8
-        assert time_object.dt.day == 6
-        assert time_object.dt.hour == 18
-        assert time_object.dt.minute == 0
-        assert time_object.dt.second == 0
-        self.assertIsNotNone(time_object.dt.tzinfo)
-
-        offset_seconds = time_object.dt.tzinfo.utcoffset(time_object.dt).seconds
-        assert (offset_seconds if offset_seconds == 0 else (offset_seconds / 60) / 60) == utc_offset_int
-
-    def _broken_timezone_datetime_helper(self, time_object_dict):
-        time_object = TimeObject.from_json_dict(time_object_dict)
-
-        self.assertIsNotNone(time_object)
-        assert type(time_object) is TimeObject
-
-        self.assertIsNotNone(time_object.dt)
-        assert type(time_object.dt) is str
+        assert len(actual.container) == 1
+        assert type(actual.container[0]) is str

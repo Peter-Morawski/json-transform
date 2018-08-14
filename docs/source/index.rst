@@ -3,10 +3,10 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Json Transform
+json-transform
 ==============
 
-Json Transform is a framework to help you serialize and deserialize your python objects into JSON documents.
+json-transform is a framework to help you serialize and deserialize your python objects into JSON documents.
 The source code of Json Transform is hosted on `Bitbucket <https://bitbucket.org/Peter-Morawski/json-transform/>`_.
 
 New? Here is some help:

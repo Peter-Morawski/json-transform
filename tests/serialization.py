@@ -1,399 +1,540 @@
 # -*- coding: utf-8 -*-
 
+import time
 import unittest
 import datetime
-from .datastructure import Person, Color, Achievement, AchievementWithoutFields, NotSerializableObject, TimeObject, \
-    ExtendedCar
+from .datastructure import JsonObjectWithoutFields, NotSerializableObject, ExtendedCar, Container, \
+    ContainerWithSomeDecoratorBeforeField, ContainerWithSomeDecoratorAfterField
 from jsontransform import ConfigurationError, DATE_FORMAT, DATETIME_FORMAT, DATETIME_TZ_FORMAT
 from dateutil import tz
-
-JOHN_FIRST_NAME = "John"
-JOHN_LAST_NAME = "Doe"
-JOHN_AGE = 38
-JOHN_BIRTH_DATE = datetime.date(1989, 9, 11)
-JOHN_HEIGHT = 171.26
-JOHN_FAVORITE_COLOR = None
-JOHN_FRIENDS_NAMES = ["Dennis Ritchie", "Linus Torvalds", "Bill Gates", "Eric Schmidt"]
-JOHN_FAVORITE_INT_NUMBERS = [42, 1337, 54153, 5556, 111328546]
-JOHN_FAVORITE_FLOAT_NUMBERS = [37.658, 359.2524, 654685.123, .002, .2]
-
-MOTHER_FIRST_NAME = "Richard"
-MOTHER_LAST_NAME = "Doe"
-MOTHER_AGE = 72
-MOTHER_RELATIVES = []
-
-FATHER_FIRST_NAME = "Catherine"
-FATHER_LAST_NAME = "Doe"
-FATHER_AGE = 17
-FATHER_RELATIVES = []
 
 
 class DictSerialization(unittest.TestCase):
     def setUp(self):
-        self._mother = Person()
-        self._mother.first_name = MOTHER_FIRST_NAME
-        self._mother.last_name = MOTHER_LAST_NAME
-        self._mother.age = MOTHER_AGE
+        self._container = Container()
 
-        self._father = Person()
-        self._father.first_name = FATHER_FIRST_NAME
-        self._father.last_name = FATHER_LAST_NAME
-        self._father.age = FATHER_AGE
+    def test_json_object_with_some_decorator_before_field_decorator(self):
+        self._container = ContainerWithSomeDecoratorBeforeField()
+        self._container.container = "some string"
+        actual = self._container.to_json_dict()
 
-        self._john = Person()
-        self._john.first_name = JOHN_FIRST_NAME
-        self._john.last_name = JOHN_LAST_NAME
-        self._john.age = JOHN_AGE
-        self._john.height = JOHN_HEIGHT
-        self._john.favorite_color = JOHN_FAVORITE_COLOR
-        self._john.relatives = [self._mother, self._father]
-        self._john.friends_names = JOHN_FRIENDS_NAMES
+        self.assertIn(Container.CONTAINER_FIELD_NAME, actual.keys())
 
-    def test_custom_field_name(self):
-        assert Person.FIELD_FIRST_NAME in self._john.to_json_dict().keys()
+    def test_json_object_with_some_decorator_after_field_decorator(self):
+        self._container = ContainerWithSomeDecoratorAfterField()
+        self._container.container = "some value"
+        actual = self._container.to_json_dict()
 
-    def test_no_custom_field_name(self):
-        assert Person.FIELD_AGE_NAME in self._john.to_json_dict().keys()
+        self.assertIn(Container.CONTAINER_FIELD_NAME, actual.keys())
 
-    def test_type_str(self):
-        actual = self._john.to_json_dict()
-        assert type(actual[Person.FIELD_FIRST_NAME]) is str
-        assert JOHN_FIRST_NAME == actual[Person.FIELD_FIRST_NAME]
+    def test_none(self):
+        self._container.container = None
+        actual = self._container.to_json_dict()
 
-    def test_type_int(self):
-        actual = self._john.to_json_dict()
-        assert type(actual[Person.FIELD_AGE_NAME]) is int
-        assert JOHN_AGE == actual[Person.FIELD_AGE_NAME]
+        self.assertEqual(self._container.container, actual[Container.CONTAINER_FIELD_NAME])
 
-    def test_type_float(self):
-        actual = self._john.to_json_dict()
-        assert type(actual[Person.FIELD_HEIGHT_NAME]) is float
-        assert JOHN_HEIGHT == actual[Person.FIELD_HEIGHT_NAME]
+    def test_str(self):
+        self._container.container = "some string"
+        actual = self._container.to_json_dict()
 
-    def test_type_json_object(self):
-        actual = self._john.to_json_dict()
-        field_hair_color = actual[Person.FIELD_HAIR_COLOR_NAME]
+        assert type(actual[Container.CONTAINER_FIELD_NAME]) is str
+        self.assertEqual(self._container.container, actual[Container.CONTAINER_FIELD_NAME])
 
-        assert type(field_hair_color) is dict
-        assert Color.FIELD_R_NAME in field_hair_color.keys()
-        assert Color.FIELD_G_NAME in field_hair_color.keys()
-        assert Color.FIELD_B_NAME in field_hair_color.keys()
-        assert field_hair_color[Color.FIELD_R_NAME] == Color.DEFAULT_VALUE
-        assert field_hair_color[Color.FIELD_G_NAME] == Color.DEFAULT_VALUE
-        assert field_hair_color[Color.FIELD_B_NAME] == Color.DEFAULT_VALUE
+    def test_int(self):
+        self._container.container = 42
+        actual = self._container.to_json_dict()
 
-    def test_type_none(self):
-        actual = self._john.to_json_dict()
-        field_favorite_color = actual[Person.FIELD_FAVORITE_COLOR_NAME]
+        assert type(actual[Container.CONTAINER_FIELD_NAME]) is int
+        self.assertEqual(self._container.container, actual[Container.CONTAINER_FIELD_NAME])
 
-        assert field_favorite_color is None
-        assert JOHN_FAVORITE_COLOR == field_favorite_color
+    def test_float(self):
+        self._container.container = 42.1337
+        actual = self._container.to_json_dict()
 
-    def test_not_serializable_type(self):
-        self._john.hair_color = NotSerializableObject()
-        with self.assertRaises(TypeError):
-            self._john.to_json_dict()
+        assert type(actual[Container.CONTAINER_FIELD_NAME]) is float
+        self.assertEqual(self._container.container, actual[Container.CONTAINER_FIELD_NAME])
 
-    def test_type_list_with_str(self):
-        actual = self._john.to_json_dict()
-        field_friend_names = actual[Person.FIELD_FRIENDS_NAMES_NAME]
+    def test_json_object(self):
+        self._container.container = Container()
+        actual = self._container.to_json_dict()
 
-        assert type(field_friend_names) is list
-        assert all(type(item) is str for item in field_friend_names)
-        assert len(JOHN_FRIENDS_NAMES) == len(field_friend_names)
-        for name in JOHN_FRIENDS_NAMES:
-            assert name in field_friend_names
+        assert type(actual[Container.CONTAINER_FIELD_NAME]) is dict
+        self.assertDictEqual(self._container.container.to_json_dict(), actual[Container.CONTAINER_FIELD_NAME])
 
-    def test_type_list_with_int(self):
-        self._john.favorite_numbers = JOHN_FAVORITE_INT_NUMBERS
-        actual = self._john.to_json_dict()
-        field_favorite_numbers = actual[Person.FIELD_FAVORITE_NUMBERS_NAME]
-
-        assert type(field_favorite_numbers) is list
-        assert all(type(item) is int for item in field_favorite_numbers)
-        assert len(JOHN_FAVORITE_INT_NUMBERS) == len(field_favorite_numbers)
-        for number in JOHN_FAVORITE_INT_NUMBERS:
-            assert number in field_favorite_numbers
-
-    def test_type_list_with_float(self):
-        self._john.favorite_numbers = JOHN_FAVORITE_FLOAT_NUMBERS
-        actual = self._john.to_json_dict()
-        field_favorite_numbers = actual[Person.FIELD_FAVORITE_NUMBERS_NAME]
-
-        assert type(field_favorite_numbers) is list
-        assert all(type(item) is float for item in field_favorite_numbers)
-        assert len(JOHN_FAVORITE_FLOAT_NUMBERS) == len(field_favorite_numbers)
-        for number in JOHN_FAVORITE_FLOAT_NUMBERS:
-            assert number in field_favorite_numbers
-
-    def test_type_list_with_json_object(self):
-        actual = self._john.to_json_dict()
-        field_relatives = actual[Person.FIELD_RELATIVES_NAME]
-
-        assert type(field_relatives) is list
-        assert all(type(item) is dict for item in field_relatives)
-        assert len(field_relatives) == 2
-
-        mother = field_relatives[0]
-        assert mother[Person.FIELD_FIRST_NAME] == MOTHER_FIRST_NAME
-        assert mother[Person.FIELD_LAST_NAME] == MOTHER_LAST_NAME
-        assert mother[Person.FIELD_AGE_NAME] == MOTHER_AGE
-        assert mother[Person.FIELD_RELATIVES_NAME] == MOTHER_RELATIVES
-
-        father = field_relatives[1]
-        assert father[Person.FIELD_FIRST_NAME] == FATHER_FIRST_NAME
-        assert father[Person.FIELD_LAST_NAME] == FATHER_LAST_NAME
-        assert father[Person.FIELD_AGE_NAME] == FATHER_AGE
-        assert father[Person.FIELD_RELATIVES_NAME] == FATHER_RELATIVES
-
-    def test_type_list_with_none(self):
-        achievements = [None, None, None]
-        self._john.achievements = achievements
-        actual = self._john.to_json_dict()
-        field_achievements = actual[Person.FIELD_ACHIEVEMENTS_NAME]
-
-        assert type(field_achievements) is list
-        assert all(item is None for item in field_achievements)
-        assert len(field_achievements) == len(achievements)
-        for achievement in achievements:
-            assert achievement in field_achievements
-
-    def test_type_list_with_list(self):
-        achievements = [
-            JOHN_FRIENDS_NAMES
-        ]
-        self._john.achievements = achievements
-        actual = self._john.to_json_dict()
-        field_achievements = actual[Person.FIELD_ACHIEVEMENTS_NAME]
-
-        assert type(field_achievements) is list
-        assert all(type(item) is list for item in field_achievements)
-        assert len(field_achievements) == len(achievements)
-        assert achievements[0] in field_achievements
-
-    def test_type_list_with_dict(self):
-        achievements = [
-            {
-                "key1": [1, 2, 3],
-                "key2": None
-            }
-        ]
-        self._john.achievements = achievements
-        actual = self._john.to_json_dict()
-        field_achievements = actual[Person.FIELD_ACHIEVEMENTS_NAME]
-
-        assert type(field_achievements) is list
-        assert all(type(item) is dict for item in field_achievements)
-        assert len(field_achievements) == len(achievements)
-        assert achievements[0] in field_achievements
-
-    def test_type_list_with_set(self):
-        achievements = [
-            set(JOHN_FRIENDS_NAMES)
-        ]
-        self._john.achievements = achievements
-        actual = self._john.to_json_dict()
-        field_achievements = actual[Person.FIELD_ACHIEVEMENTS_NAME]
-
-        assert type(field_achievements) is list
-        assert all(type(item) is list for item in field_achievements)
-        assert len(field_achievements) == len(achievements)
-        assert list(achievements[0]) in field_achievements
-
-    def test_type_list_with_tuple(self):
-        achievements = [
-            tuple(JOHN_FRIENDS_NAMES)
-        ]
-        self._john.achievements = achievements
-        actual = self._john.to_json_dict()
-        field_achievements = actual[Person.FIELD_ACHIEVEMENTS_NAME]
-
-        assert type(field_achievements) is list
-        assert all(type(item) is list for item in field_achievements)
-        assert len(field_achievements) == len(achievements)
-        assert list(achievements[0]) in field_achievements
-
-    def test_type_list_with_json_object_without_field(self):
-        self._john.achievements = [AchievementWithoutFields()]
+    def test_json_object_without_fields(self):
+        self._container.container = JsonObjectWithoutFields()
 
         with self.assertRaises(ConfigurationError):
-            self._john.to_json_dict()
+            self._container.to_json_dict()
 
-    def test_type_list_with_not_serializable_object(self):
-        self._john.achievements = [NotSerializableObject()]
+    def test_not_serializable_object(self):
+        self._container.container = NotSerializableObject()
 
         with self.assertRaises(TypeError):
-            self._john.to_json_dict()
+            self._container.to_json_dict()
 
-    def test_type_dict_with_str(self):
-        dict_type = {
-            "key": JOHN_FIRST_NAME
+    def test_empty_list(self):
+        self._container.container = []
+        actual = self._container.to_json_dict()
+
+        assert type(actual[Container.CONTAINER_FIELD_NAME]) is list
+        self.assertListEqual(self._container.container, actual[Container.CONTAINER_FIELD_NAME])
+
+    def test_list_with_none(self):
+        self._container.container = [None, None, None]
+        actual = self._container.to_json_dict()
+
+        assert type(actual[Container.CONTAINER_FIELD_NAME]) is list
+        self.assertListEqual(self._container.container, actual[Container.CONTAINER_FIELD_NAME])
+
+    def test_list_with_str(self):
+        self._container.container = ["some string", "another string"]
+        actual = self._container.to_json_dict()
+
+        assert type(actual[Container.CONTAINER_FIELD_NAME]) is list
+        self.assertListEqual(self._container.container, actual[Container.CONTAINER_FIELD_NAME])
+
+    def test_list_with_int(self):
+        self._container.container = [1, 2, 3, 4]
+        actual = self._container.to_json_dict()
+
+        assert type(actual[Container.CONTAINER_FIELD_NAME]) is list
+        self.assertListEqual(self._container.container, actual[Container.CONTAINER_FIELD_NAME])
+
+    def test_list_with_float(self):
+        self._container.container = [1.123, 2.123, 3.123, 4.123]
+        actual = self._container.to_json_dict()
+
+        assert type(actual[Container.CONTAINER_FIELD_NAME]) is list
+        self.assertListEqual(self._container.container, actual[Container.CONTAINER_FIELD_NAME])
+
+    def test_list_with_json_object(self):
+        self._container.container = [Container(), Container(), Container()]
+        actual = self._container.to_json_dict()
+
+        assert type(actual[Container.CONTAINER_FIELD_NAME]) is list
+
+        expected = [item.to_json_dict() for item in self._container.container]
+        self.assertListEqual(expected, actual[Container.CONTAINER_FIELD_NAME])
+
+    def test_list_with_json_object_without_fields(self):
+        self._container.container = [JsonObjectWithoutFields(), JsonObjectWithoutFields()]
+
+        with self.assertRaises(ConfigurationError):
+            self._container.to_json_dict()
+
+    def test_list_with_not_serializable_object(self):
+        self._container.container = [NotSerializableObject(), NotSerializableObject()]
+
+        with self.assertRaises(TypeError):
+            self._container.to_json_dict()
+
+    def test_list_with_list(self):
+        self._container.container = [
+            [],
+            [1, 2, 3],
+            [1.111, 2.12356],
+            ["some string"],
+            [None, None, None],
+            [Container(), Container()],
+        ]
+        actual = self._container.to_json_dict()
+
+        assert type(actual[Container.CONTAINER_FIELD_NAME]) is list
+
+        expected = [item for item in self._container.container]
+        for lst in expected:
+            for i, item in enumerate(lst):
+                if type(item) is Container:
+                    lst[i] = lst[i].to_json_dict()
+
+        self.assertListEqual(expected, actual[Container.CONTAINER_FIELD_NAME])
+
+    def test_list_with_tuple(self):
+        self._container.container = [tuple([]), tuple([1, 2, 3])]
+        actual = self._container.to_json_dict()
+
+        assert type(actual[Container.CONTAINER_FIELD_NAME]) is list
+
+        expected = [list(item) for item in self._container.container]
+        self.assertListEqual(expected, actual[Container.CONTAINER_FIELD_NAME])
+
+    def test_list_with_set(self):
+        self._container.container = [set([]), {1, 2, 3}]
+        actual = self._container.to_json_dict()
+
+        assert type(actual[Container.CONTAINER_FIELD_NAME]) is list
+
+        expected = [list(item) for item in self._container.container]
+        self.assertListEqual(expected, actual[Container.CONTAINER_FIELD_NAME])
+
+    def test_list_with_dict(self):
+        self._container.container = [{"key1": "", "key2": None}, {"key1": 1, "key2": 1.123}]
+        actual = self._container.to_json_dict()
+
+        assert type(actual[Container.CONTAINER_FIELD_NAME]) is list
+        for index, item in enumerate(actual[Container.CONTAINER_FIELD_NAME]):
+            self.assertDictEqual(item, self._container.container[index])
+
+    def test_empty_tuple(self):
+        self._container.container = tuple([])
+        actual = self._container.to_json_dict()
+
+        assert type(actual[Container.CONTAINER_FIELD_NAME]) is list
+
+        expected = list(self._container.container)
+        self.assertListEqual(expected, actual[Container.CONTAINER_FIELD_NAME])
+
+    def test_tuple_with_none(self):
+        self._container.container = (None, None, None)
+        actual = self._container.to_json_dict()
+
+        assert type(actual[Container.CONTAINER_FIELD_NAME]) is list
+
+        expected = list(self._container.container)
+        self.assertListEqual(expected, actual[Container.CONTAINER_FIELD_NAME])
+
+    def test_tuple_with_str(self):
+        self._container.container = ("some string", "another string", "and another string...")
+        actual = self._container.to_json_dict()
+
+        assert type(actual[Container.CONTAINER_FIELD_NAME]) is list
+
+        expected = list(self._container.container)
+        self.assertListEqual(expected, actual[Container.CONTAINER_FIELD_NAME])
+
+    def test_tuple_with_int(self):
+        self._container.container = (1, 2, 3, 4)
+        actual = self._container.to_json_dict()
+
+        assert type(actual[Container.CONTAINER_FIELD_NAME]) is list
+
+        expected = list(self._container.container)
+        self.assertListEqual(expected, actual[Container.CONTAINER_FIELD_NAME])
+
+    def test_tuple_with_float(self):
+        self._container.container = (1.123, 2.123, 3.1337)
+        actual = self._container.to_json_dict()
+
+        assert type(actual[Container.CONTAINER_FIELD_NAME]) is list
+
+        expected = list(self._container.container)
+        self.assertListEqual(expected, actual[Container.CONTAINER_FIELD_NAME])
+
+    def test_tuple_with_json_object(self):
+        self._container.container = (Container(), Container(), Container())
+        actual = self._container.to_json_dict()
+
+        assert type(actual[Container.CONTAINER_FIELD_NAME]) is list
+
+        expected = [item.to_json_dict() for item in self._container.container]
+        self.assertListEqual(expected, actual[Container.CONTAINER_FIELD_NAME])
+
+    def test_tuple_with_json_object_without_fields(self):
+        self._container.container = (JsonObjectWithoutFields(), JsonObjectWithoutFields(), JsonObjectWithoutFields())
+
+        with self.assertRaises(ConfigurationError):
+            self._container.to_json_dict()
+
+    def test_tuple_with_not_serializable_object(self):
+        self._container.container = (NotSerializableObject(), NotSerializableObject())
+
+        with self.assertRaises(TypeError):
+            self._container.to_json_dict()
+
+    def test_tuple_with_list(self):
+        self._container.container = (
+            [],
+            [1, 2, 3, 4],
+            ["some string", "another string", "and yet another string"]
+        )
+        actual = self._container.to_json_dict()
+
+        assert type(actual[Container.CONTAINER_FIELD_NAME]) is list
+
+        expected = list(self._container.container)
+        self.assertListEqual(expected, actual[Container.CONTAINER_FIELD_NAME])
+
+    def test_tuple_with_tuple(self):
+        self._container.container = (
+            tuple([]),
+            tuple([1, 2, 3, 4]),
+            tuple(["some string", "another string"])
+        )
+        actual = self._container.to_json_dict()
+
+        assert type(actual[Container.CONTAINER_FIELD_NAME]) is list
+
+        expected = [list(item) for item in self._container.container]
+        self.assertListEqual(expected, actual[Container.CONTAINER_FIELD_NAME])
+
+    def test_tuple_with_set(self):
+        self._container.container = (
+            set([]),
+            {1, 2, 3, 4, 5},
+            {Container(), Container(), Container()},
+            {"some string", "another string"}
+        )
+        actual = self._container.to_json_dict()
+
+        assert type(actual[Container.CONTAINER_FIELD_NAME]) is list
+
+        expected = [list(item) for item in self._container.container]
+        for lst in expected:
+            for i, item in enumerate(lst):
+                if type(item) is Container:
+                    lst[i] = lst[i].to_json_dict()
+
+        self.assertListEqual(expected, actual[Container.CONTAINER_FIELD_NAME])
+
+    def test_tuple_with_dict(self):
+        self._container.container = (
+            {},
+            {"key1": "some string", "key2": "another string"},
+            {"key1": 1, "key2": 2, "key3": 3}
+        )
+        actual = self._container.to_json_dict()
+
+        assert type(actual[Container.CONTAINER_FIELD_NAME]) is list
+
+        expected = list(self._container.container)
+        self.assertListEqual(expected, actual[Container.CONTAINER_FIELD_NAME])
+
+    def test_empty_set(self):
+        self._container.container = set([])
+        actual = self._container.to_json_dict()
+
+        assert type(actual[Container.CONTAINER_FIELD_NAME]) is list
+
+        expected = list(self._container.container)
+        self.assertListEqual(expected, actual[Container.CONTAINER_FIELD_NAME])
+
+    def test_set_with_none(self):
+        self._container.container = {None, None, None}
+        actual = self._container.to_json_dict()
+
+        assert type(actual[Container.CONTAINER_FIELD_NAME]) is list
+
+        expected = list(self._container.container)
+        self.assertListEqual(expected, actual[Container.CONTAINER_FIELD_NAME])
+
+    def test_set_with_str(self):
+        self._container.container = {"some string", "string", "another string", "ayyyyyy"}
+        actual = self._container.to_json_dict()
+
+        assert type(actual[Container.CONTAINER_FIELD_NAME]) is list
+
+        expected = list(self._container.container)
+        self.assertListEqual(expected, actual[Container.CONTAINER_FIELD_NAME])
+
+    def test_set_with_int(self):
+        self._container.container = {1, 2, 3, 4, 5, 6}
+        actual = self._container.to_json_dict()
+
+        assert type(actual[Container.CONTAINER_FIELD_NAME]) is list
+
+        expected = list(self._container.container)
+        self.assertListEqual(expected, actual[Container.CONTAINER_FIELD_NAME])
+
+    def test_set_with_float(self):
+        self._container.container = {1.1, 2.1337, 3.42, 12.9999}
+        actual = self._container.to_json_dict()
+
+        assert type(actual[Container.CONTAINER_FIELD_NAME]) is list
+
+        expected = list(self._container.container)
+        self.assertListEqual(expected, actual[Container.CONTAINER_FIELD_NAME])
+
+    def test_set_with_json_object(self):
+        self._container.container = {Container(), Container(), Container()}
+        actual = self._container.to_json_dict()
+
+        assert type(actual[Container.CONTAINER_FIELD_NAME]) is list
+
+        expected = [item.to_json_dict() for item in self._container.container]
+        self.assertListEqual(expected, actual[Container.CONTAINER_FIELD_NAME])
+
+    def test_set_with_json_object_without_fields(self):
+        self._container.container = {JsonObjectWithoutFields(), JsonObjectWithoutFields()}
+
+        with self.assertRaises(ConfigurationError):
+            self._container.to_json_dict()
+
+    def test_set_with_not_serializable_object(self):
+        self._container.container = {NotSerializableObject()}
+
+        with self.assertRaises(TypeError):
+            self._container.to_json_dict()
+
+    def test_set_with_tuple(self):
+        self._container.container = {
+            (),
+            (1, 2, 3),
+            ("a string", "str", "some string", "another string")
         }
-        self._john.dict_type = dict_type
-        actual = self._john.to_json_dict()
-        field_dict_type = actual[Person.FIELD_DICT_TYPE_NAME]
+        actual = self._container.to_json_dict()
 
-        assert type(field_dict_type) is dict
-        assert dict_type == field_dict_type
+        assert type(actual[Container.CONTAINER_FIELD_NAME]) is list
 
-    def test_type_dict_with_int(self):
-        dict_type = {
-            "key": JOHN_AGE
+        expected = [list(item) for item in self._container.container]
+        self.assertListEqual(expected, actual[Container.CONTAINER_FIELD_NAME])
+
+    def test_empty_dict(self):
+        self._container.container = {}
+        actual = self._container.to_json_dict()
+
+        assert type(actual[Container.CONTAINER_FIELD_NAME]) is dict
+        self.assertDictEqual(self._container.container, actual[Container.CONTAINER_FIELD_NAME])
+
+    def test_dict_with_none(self):
+        self._container.container = {
+            "key1": None,
+            "key2": None
         }
-        self._john.dict_type = dict_type
-        actual = self._john.to_json_dict()
-        field_dict_type = actual[Person.FIELD_DICT_TYPE_NAME]
+        actual = self._container.to_json_dict()
 
-        assert type(field_dict_type) is dict
-        assert dict_type == field_dict_type
+        assert type(actual[Container.CONTAINER_FIELD_NAME]) is dict
+        self.assertDictEqual(self._container.container, actual[Container.CONTAINER_FIELD_NAME])
 
-    def test_type_dict_with_float(self):
-        dict_type = {
-            "key": JOHN_HEIGHT
+    def test_dict_with_str(self):
+        self._container.container = {
+            "key1": "some string",
+            "key2": "another string"
         }
-        self._john.dict_type = dict_type
-        actual = self._john.to_json_dict()
-        field_dict_type = actual[Person.FIELD_DICT_TYPE_NAME]
+        actual = self._container.to_json_dict()
 
-        assert type(field_dict_type) is dict
-        assert dict_type == field_dict_type
+        assert type(actual[Container.CONTAINER_FIELD_NAME]) is dict
+        self.assertDictEqual(self._container.container, actual[Container.CONTAINER_FIELD_NAME])
 
-    def test_type_dict_with_none(self):
-        dict_type = {
-            "key": None
+    def test_dict_with_int(self):
+        self._container.container = {
+            "key1": 1,
+            "key2": 2,
         }
-        self._john.dict_type = dict_type
-        actual = self._john.to_json_dict()
-        field_dict_type = actual[Person.FIELD_DICT_TYPE_NAME]
+        actual = self._container.to_json_dict()
 
-        assert type(field_dict_type) is dict
-        assert dict_type == field_dict_type
+        assert type(actual[Container.CONTAINER_FIELD_NAME]) is dict
+        self.assertDictEqual(self._container.container, actual[Container.CONTAINER_FIELD_NAME])
 
-    def test_type_dict_with_list(self):
-        dict_type = {
-            "key": JOHN_FRIENDS_NAMES
+    def test_dict_with_float(self):
+        self._container.container = {
+            "key1": 1.1337,
+            "key2": 42.4444
         }
-        self._john.dict_type = dict_type
-        actual = self._john.to_json_dict()
-        field_dict_type = actual[Person.FIELD_DICT_TYPE_NAME]
+        actual = self._container.to_json_dict()
 
-        assert type(field_dict_type) is dict
-        assert len(JOHN_FRIENDS_NAMES) == len(field_dict_type["key"])
-        for name in JOHN_FRIENDS_NAMES:
-            assert name in field_dict_type["key"]
+        assert type(actual[Container.CONTAINER_FIELD_NAME]) is dict
+        self.assertDictEqual(self._container.container, actual[Container.CONTAINER_FIELD_NAME])
 
-    def test_type_dict_with_set(self):
-        self._john.dict_type = {
-            "key": set(JOHN_FRIENDS_NAMES)
+    def test_dict_with_json_object(self):
+        self._container.container = {
+            "key1": Container(),
+            "key2": Container()
         }
-        actual = self._john.to_json_dict()
-        field_dict_type = actual[Person.FIELD_DICT_TYPE_NAME]
+        actual = self._container.to_json_dict()
 
-        assert type(field_dict_type) is dict
-        assert type(field_dict_type["key"]) is list
-        assert len(JOHN_FRIENDS_NAMES) == len(field_dict_type["key"])
-        for name in JOHN_FRIENDS_NAMES:
-            assert name in field_dict_type["key"]
+        assert type(actual[Container.CONTAINER_FIELD_NAME]) is dict
 
-    def test_type_dict_with_tuple(self):
-        self._john.dict_type = {
-            "key": tuple(JOHN_FRIENDS_NAMES)
+        expected = {key: self._container.container[key].to_json_dict() for key in self._container.container.keys()}
+        self.assertDictEqual(expected, actual[Container.CONTAINER_FIELD_NAME])
+
+    def test_dict_with_json_object_without_fields(self):
+        self._container.container = {
+            "key1": JsonObjectWithoutFields(),
+            "key2": JsonObjectWithoutFields()
         }
-        actual = self._john.to_json_dict()
-        field_dict_type = actual[Person.FIELD_DICT_TYPE_NAME]
 
-        assert type(field_dict_type) is dict
-        assert type(field_dict_type["key"]) is list
-        assert len(JOHN_FRIENDS_NAMES) == len(field_dict_type["key"])
-        for name in JOHN_FRIENDS_NAMES:
-            assert name in field_dict_type["key"]
+        with self.assertRaises(ConfigurationError):
+            self._container.to_json_dict()
 
-    def test_type_dict_with_dict(self):
-        self._john.dict_type = {
-            "key": {
-                "key": JOHN_FIRST_NAME
+    def test_dict_with_not_serializable_object(self):
+        self._container.container = {
+            "key1": NotSerializableObject(),
+            "key2": NotSerializableObject()
+        }
+
+        with self.assertRaises(TypeError):
+            self._container.to_json_dict()
+
+    def test_dict_with_list(self):
+        self._container.container = {
+            "key1": [],
+            "key2": ["some string", "another string"]
+        }
+        actual = self._container.to_json_dict()
+
+        assert type(actual[Container.CONTAINER_FIELD_NAME]) is dict
+        self.assertDictEqual(self._container.container, actual[Container.CONTAINER_FIELD_NAME])
+
+    def test_dict_with_tuple(self):
+        self._container.container = {
+            "key1": (),
+            "key2": (1, 2, 3),
+            "key3": ("s", "i", "p")
+        }
+        actual = self._container.to_json_dict()
+
+        assert type(actual[Container.CONTAINER_FIELD_NAME]) is dict
+
+        expected = {key: list(self._container.container[key]) for key in self._container.container.keys()}
+        self.assertDictEqual(expected, actual[Container.CONTAINER_FIELD_NAME])
+
+    def test_dict_with_set(self):
+        self._container.container = {
+            "key1": set([]),
+            "key2": {1.1337, 42.0}
+        }
+        actual = self._container.to_json_dict()
+
+        assert type(actual[Container.CONTAINER_FIELD_NAME]) is dict
+
+        expected = {key: list(self._container.container[key]) for key in self._container.container.keys()}
+        self.assertDictEqual(expected, actual[Container.CONTAINER_FIELD_NAME])
+
+    def test_dict_with_dict(self):
+        self._container.container = {
+            "key1": {
+                "key1": "string"
+            },
+            "key2": {
+                "key1": 1,
+                "key2": 2
             }
         }
-        actual = self._john.to_json_dict()
-        field_dict_type = actual[Person.FIELD_DICT_TYPE_NAME]
+        actual = self._container.to_json_dict()
 
-        assert type(field_dict_type) is dict
-        self.assertDictEqual(self._john.dict_type, field_dict_type)
+        assert type(actual[Container.CONTAINER_FIELD_NAME]) is dict
+        self.assertDictEqual(self._container.container, actual[Container.CONTAINER_FIELD_NAME])
 
-    def test_type_dict_with_not_serializable_object(self):
-        dict_type = {
-            "key": NotSerializableObject()
-        }
-        self._john.dict_type = dict_type
+    def test_inheritance(self):
+        self._container.container = ExtendedCar()
+        actual = self._container.to_json_dict()
 
-        with self.assertRaises(TypeError):
-            self._john.to_json_dict()
-
-    def test_type_dict_with_json_object(self):
-        dict_type = {
-            "key": Achievement()
-        }
-        self._john.dict_type = dict_type
-        actual = self._john.to_json_dict()
-        field_dict_type = actual[Person.FIELD_DICT_TYPE_NAME]
-
-        assert type(field_dict_type) is dict
-
-        expected = {
-            "key": Achievement().to_json_dict()
-        }
-        self.assertDictEqual(expected, field_dict_type)
-
-    def test_if_type_set_is_converted_to_list(self):
-        self._john.achievements = set(JOHN_FRIENDS_NAMES)
-        actual = self._john.to_json_dict()
-        assert type(actual[Person.FIELD_ACHIEVEMENTS_NAME]) is list
-
-    def test_if_type_tuple_is_converted_to_list(self):
-        self._john.achievements = tuple(JOHN_FRIENDS_NAMES)
-        actual = self._john.to_json_dict()
-        assert type(actual[Person.FIELD_ACHIEVEMENTS_NAME]) is list
-
-    def test_with_some_decorator_before_field_decorator(self):
-        actual = self._john.to_json_dict()
-        assert Person.FIELD_LAST_NAME in actual.keys()
-
-    def test_with_some_decorator_after_field_decorator(self):
-        actual = self._john.to_json_dict()
-        assert Person.FIELD_FAVORITE_PET_NAME in actual.keys()
-
-    def test_if_inherits_fields(self):
-        extended_car = ExtendedCar()
-        actual = extended_car.to_json_dict()
-
-        assert ExtendedCar.FIELD_HORSEPOWER_NAME in actual.keys()
-        assert ExtendedCar.FIELD_MODEL_NAME_NAME in actual.keys()
-        assert ExtendedCar.FIELD_MAX_SPEED_NAME in actual.keys()
+        assert type(actual[Container.CONTAINER_FIELD_NAME]) is dict
+        self.assertIn(ExtendedCar.FIELD_MAX_SPEED_NAME, actual[Container.CONTAINER_FIELD_NAME].keys())
+        self.assertIn(ExtendedCar.FIELD_MODEL_NAME_NAME, actual[Container.CONTAINER_FIELD_NAME].keys())
+        self.assertIn(ExtendedCar.FIELD_HORSEPOWER_NAME, actual[Container.CONTAINER_FIELD_NAME].keys())
 
 
 class DictSerializationWithTimes(unittest.TestCase):
     def setUp(self):
-        self._time_obj = TimeObject()
+        self._container = Container()
 
     def test_date(self):
         date = datetime.date.today()
+        self._container.container = date
+        actual = self._container.to_json_dict()
+
         expected = date.strftime(DATE_FORMAT)
-
-        self._time_obj.date = date
-        actual = self._time_obj.to_json_dict()
-        field_date = actual[TimeObject.FIELD_DATE_NAME]
-
-        assert field_date == expected
+        self.assertEqual(expected, actual[Container.CONTAINER_FIELD_NAME])
 
     def test_with_naive_datetime(self):
         dt = datetime.datetime.now()
+        self._container.container = dt
+        actual = self._container.to_json_dict()
+
         expected = dt.strftime(DATETIME_FORMAT)
-
-        self._time_obj.dt = dt
-        actual = self._time_obj.to_json_dict()
-        field_dt = actual[TimeObject.FIELD_DT_NAME]
-
-        assert field_dt == expected
+        self.assertEqual(expected, actual[Container.CONTAINER_FIELD_NAME])
 
     def test_with_utc_datetime(self):
         self._datetime_timezone_helper("UTC", "+0000")
@@ -410,13 +551,224 @@ class DictSerializationWithTimes(unittest.TestCase):
     def test_with_tokyo_datetime(self):
         self._datetime_timezone_helper("Asia/Tokyo", "+0900")
 
+    def test_with_new_york_datetime(self):
+        self._datetime_timezone_helper("America/New_York", "-0500" if time.localtime().tm_isdst == 0 else "-0400")
+
     def _datetime_timezone_helper(self, timezone_name, utc_offset):
         dt = datetime.datetime.now(tz.gettz(timezone_name))
-        self._time_obj.dt = dt
+        self._container.container = dt
+        actual = self._container.to_json_dict()
 
         expected = dt.strftime(DATETIME_TZ_FORMAT)
-        actual = self._time_obj.to_json_dict()
-        field_dt = actual[TimeObject.FIELD_DT_NAME]
+        self.assertEqual(expected, actual[Container.CONTAINER_FIELD_NAME])
+        self.assertTrue(actual[Container.CONTAINER_FIELD_NAME].endswith(utc_offset))
 
-        assert field_dt == expected
-        self.assertTrue(field_dt.endswith(utc_offset))
+    def test_list_with_date(self):
+        self._container.container = [datetime.date.today(), datetime.date.today() - datetime.timedelta(1)]
+        actual = self._container.to_json_dict()
+
+        assert type(actual[Container.CONTAINER_FIELD_NAME]) is list
+
+        expected = [item.strftime(DATE_FORMAT) for item in self._container.container]
+        self.assertListEqual(expected, actual[Container.CONTAINER_FIELD_NAME])
+
+    def test_list_with_naive_datetime(self):
+        self._container.container = [datetime.datetime.now(), datetime.datetime.now() - datetime.timedelta(1)]
+        actual = self._container.to_json_dict()
+
+        assert type(actual[Container.CONTAINER_FIELD_NAME]) is list
+
+        expected = [item.strftime(DATETIME_FORMAT) for item in self._container.container]
+        self.assertListEqual(expected, actual[Container.CONTAINER_FIELD_NAME])
+
+    def test_list_with_utc_datetime(self):
+        self._datetime_timezone_list_helper("UTC", "+0000")
+
+    def test_list_with_berlin_datetime(self):
+        self._datetime_timezone_list_helper("Europe/Berlin", "+0200")
+
+    def test_list_with_london_datetime(self):
+        self._datetime_timezone_list_helper("Europe/London", "+0100")
+
+    def test_list_with_istanbul_datetime(self):
+        self._datetime_timezone_list_helper("Europe/Istanbul", "+0300")
+
+    def test_list_with_tokyo_datetime(self):
+        self._datetime_timezone_list_helper("Asia/Tokyo", "+0900")
+
+    def test_list_with_new_york_datetime(self):
+        self._datetime_timezone_list_helper("America/New_York", "-0500" if time.localtime().tm_isdst == 0 else "-0400")
+
+    def _datetime_timezone_list_helper(self, timezone_name, utc_offset):
+        self._container.container = [
+            datetime.datetime.now(tz.gettz(timezone_name)),
+            datetime.datetime.now(tz.gettz(timezone_name)) - datetime.timedelta(2),
+            datetime.datetime.now(tz.gettz(timezone_name)) - datetime.timedelta(hours=5)
+        ]
+        self._datetime_timezone_iterable_helper(utc_offset)
+
+    def test_tuple_with_date(self):
+        self._container.container = (datetime.date.today(), datetime.date.today() - datetime.timedelta(1))
+        actual = self._container.to_json_dict()
+
+        assert type(actual[Container.CONTAINER_FIELD_NAME]) is list
+
+        expected = [item.strftime(DATE_FORMAT) for item in self._container.container]
+        self.assertListEqual(expected, actual[Container.CONTAINER_FIELD_NAME])
+
+    def test_tuple_with_naive_datetime(self):
+        self._container.container = [datetime.datetime.now(), datetime.datetime.now() - datetime.timedelta(hours=3)]
+        actual = self._container.to_json_dict()
+
+        assert type(actual[Container.CONTAINER_FIELD_NAME]) is list
+
+        expected = [item.strftime(DATETIME_FORMAT) for item in self._container.container]
+        self.assertListEqual(expected, actual[Container.CONTAINER_FIELD_NAME])
+
+    def test_tuple_with_utc_datetime(self):
+        self._datetime_timezone_tuple_helper("UTC", "+0000")
+
+    def test_tuple_with_berlin_datetime(self):
+        self._datetime_timezone_tuple_helper("Europe/Berlin", "+0200")
+
+    def test_tuple_with_london_datetime(self):
+        self._datetime_timezone_tuple_helper("Europe/London", "+0100")
+
+    def test_tuple_with_istanbul_datetime(self):
+        self._datetime_timezone_tuple_helper("Europe/Istanbul", "+0300")
+
+    def test_tuple_with_tokyo_datetime(self):
+        self._datetime_timezone_tuple_helper("Asia/Tokyo", "+0900")
+
+    def test_tuple_with_new_york_datetime(self):
+        self._datetime_timezone_tuple_helper("America/New_York", "-0500" if time.localtime().tm_isdst == 0 else "-0400")
+
+    def _datetime_timezone_tuple_helper(self, timezone_name, utc_offset):
+        self._container.container = (
+            datetime.datetime.now(tz.gettz(timezone_name)),
+            datetime.datetime.now(tz.gettz(timezone_name)) + datetime.timedelta(2),
+            datetime.datetime.now(tz.gettz(timezone_name)) - datetime.timedelta(16)
+        )
+        self._datetime_timezone_iterable_helper(utc_offset)
+
+    def test_set_with_date(self):
+        self._container.container = {datetime.date.today()}
+        actual = self._container.to_json_dict()
+
+        assert type(actual[Container.CONTAINER_FIELD_NAME]) is list
+
+        expected = [item.strftime(DATE_FORMAT) for item in self._container.container]
+        self.assertListEqual(expected, actual[Container.CONTAINER_FIELD_NAME])
+
+    def test_set_with_naive_datetime(self):
+        self._container.container = {
+            datetime.datetime.now(),
+            datetime.datetime.now() - datetime.timedelta(1),
+            datetime.datetime.now() - datetime.timedelta(hours=1)
+        }
+        actual = self._container.to_json_dict()
+
+        assert type(actual[Container.CONTAINER_FIELD_NAME]) is list
+
+        expected = [item.strftime(DATETIME_FORMAT) for item in self._container.container]
+        self.assertListEqual(expected, actual[Container.CONTAINER_FIELD_NAME])
+
+    def test_set_with_utc_datetime(self):
+        self._datetime_timezone_set_helper("UTC", "+0000")
+
+    def test_set_with_berlin_datetime(self):
+        self._datetime_timezone_set_helper("Europe/Berlin", "+0200")
+
+    def test_set_with_london_datetime(self):
+        self._datetime_timezone_set_helper("Europe/London", "+0100")
+
+    def test_set_with_istanbul_datetime(self):
+        self._datetime_timezone_set_helper("Europe/Istanbul", "+0300")
+
+    def test_set_with_tokyo_datetime(self):
+        self._datetime_timezone_set_helper("Asia/Tokyo", "+0900")
+
+    def test_set_with_new_york_datetime(self):
+        self._datetime_timezone_set_helper("America/New_York", "-0500" if time.localtime().tm_isdst == 0 else "-0400")
+
+    def _datetime_timezone_set_helper(self, timezone_name, utc_offset):
+        self._container.container = {
+            datetime.datetime.now(tz.gettz(timezone_name)) - datetime.timedelta(7),
+            datetime.datetime.now(tz.gettz(timezone_name)) + datetime.timedelta(hours=1),
+            datetime.datetime.now(tz.gettz(timezone_name))
+        }
+        self._datetime_timezone_iterable_helper(utc_offset)
+
+    def test_dict_with_date(self):
+        self._container.container = {
+            "key1": datetime.date.today(),
+            "key2": datetime.date.today() - datetime.timedelta(7),
+            "key3": datetime.date.today() - datetime.timedelta(39)
+        }
+        actual = self._container.to_json_dict()
+
+        assert type(actual[Container.CONTAINER_FIELD_NAME]) is dict
+
+        expected = {
+            key: self._container.container[key].strftime(DATE_FORMAT) for key in self._container.container.keys()
+        }
+        self.assertDictEqual(expected, actual[Container.CONTAINER_FIELD_NAME])
+
+    def test_dict_with_naive_datetime(self):
+        self._container.container = {
+            "key1": datetime.datetime.now() - datetime.timedelta(12)
+        }
+        actual = self._container.to_json_dict()
+
+        assert type(actual[Container.CONTAINER_FIELD_NAME]) is dict
+
+        expected = {
+            key: self._container.container[key].strftime(DATETIME_FORMAT) for key in self._container.container.keys()
+        }
+        self.assertDictEqual(expected, actual[Container.CONTAINER_FIELD_NAME])
+
+    def test_dict_with_utc_datetime(self):
+        self._datetime_timezone_dict_helper("UTC", "+0000")
+
+    def test_dict_with_berlin_datetime(self):
+        self._datetime_timezone_dict_helper("Europe/Berlin", "+0200")
+
+    def test_dict_with_london_datetime(self):
+        self._datetime_timezone_dict_helper("Europe/London", "+0100")
+
+    def test_dict_with_istanbul_datetime(self):
+        self._datetime_timezone_dict_helper("Europe/Istanbul", "+0300")
+
+    def test_dict_with_tokyo_datetime(self):
+        self._datetime_timezone_dict_helper("Asia/Tokyo", "+0900")
+
+    def test_dict_with_new_york_datetime(self):
+        self._datetime_timezone_dict_helper("America/New_York", "-0500" if time.localtime().tm_isdst == 0 else "-0400")
+
+    def _datetime_timezone_dict_helper(self, timezone_name, utc_offset):
+        self._container.container = {
+            "key1": datetime.datetime.now(tz.gettz(timezone_name)) - datetime.timedelta(12),
+            "key2": datetime.datetime.now(tz.gettz(timezone_name)),
+            "key3": datetime.datetime.now(tz.gettz(timezone_name)) + datetime.timedelta(minutes=1)
+        }
+        actual = self._container.to_json_dict()
+
+        assert type(actual[Container.CONTAINER_FIELD_NAME]) is dict
+
+        expected = {
+            key: self._container.container[key].strftime(DATETIME_TZ_FORMAT) for key in self._container.container.keys()
+        }
+        self.assertDictEqual(expected, actual[Container.CONTAINER_FIELD_NAME])
+        for key in actual[Container.CONTAINER_FIELD_NAME].keys():
+            assert actual[Container.CONTAINER_FIELD_NAME][key].endswith(utc_offset)
+
+    def _datetime_timezone_iterable_helper(self, utc_offset):
+        actual = self._container.to_json_dict()
+
+        assert type(actual[Container.CONTAINER_FIELD_NAME]) is list
+
+        expected = [item.strftime(DATETIME_TZ_FORMAT) for item in self._container.container]
+        self.assertListEqual(expected, actual[Container.CONTAINER_FIELD_NAME])
+
+        for item in actual[Container.CONTAINER_FIELD_NAME]:
+            assert item.endswith(utc_offset)

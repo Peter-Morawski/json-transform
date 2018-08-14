@@ -13,7 +13,7 @@ DATETIME_TZ_FORMAT = "%Y-%m-%dT%H:%M:%S%z"
 DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 
 _DATE_FORMAT_REGEX = r"^[0-9]{4}-[0-9]{1,}-[0-9]{1,}$"
-_DATETIME_TZ_FORMAT_REGEX = r"^[0-9]{4}-[0-9]{1,}-[0-9]{1,}T[0-9]{2}:[0-9]{2}:[0-9]{2}\+[0-9]{4}$"
+_DATETIME_TZ_FORMAT_REGEX = r"^[0-9]{4}-[0-9]{1,}-[0-9]{1,}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\+|\-)[0-9]{4}$"
 _DATETIME_FORMAT_REGEX = r"^[0-9]{4}-[0-9]{1,}-[0-9]{1,}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
 
 _JSON_FIELD_NAME = "_json_field_name"
@@ -107,6 +107,9 @@ class JsonObject(object):
         :raises TypeError:
         :return: An instance of this class.
         """
+        if json_string is None:
+            raise TypeError("'NoneType' is not deserializable")
+
         d = json.loads(json_string)
         return cls.from_json_dict(d)
 
@@ -132,6 +135,9 @@ class JsonObject(object):
         :raises TypeError: When this class didn't contain any fields defined in the JSON file.
         :return: An instance of this class with the values of the JSON file.
         """
+        if f is None:
+            raise TypeError("'NoneType' is not deserializable")
+
         d = json.load(f)
         return cls.from_json_dict(d)
 
@@ -157,6 +163,9 @@ class JsonObject(object):
         :raises TypeError: When this class didn't contain any fields defined by the dict.
         :return: An instance of this class with the values of the dict.
         """
+        if json_dict is None:
+            raise TypeError("'NoneType' is not deserializable")
+
         result = cls()
         properties = _JsonUtil.get_decorated_properties(result)
         if not properties:
@@ -165,7 +174,7 @@ class JsonObject(object):
             raise TypeError("No matching fields found to build this class")
 
         for p in properties.keys():
-            value = _JsonUtil.reverse_normalized_property_value(json_dict.get(p))
+            value = _JsonUtil.reverse_normalized_value(json_dict.get(p))
             if value is not None:
                 properties[p].fset(result, value)
 
@@ -279,7 +288,7 @@ class _JsonUtil(object):
             raise TypeError("The object type `{}` is not JSON serializable".format(type(value)))
 
     @classmethod
-    def reverse_normalized_property_value(cls, normalized_value):
+    def reverse_normalized_value(cls, normalized_value):
         """
         Reverse the normalization of a value e.g. from a date string like '2018-08-09' create a :class:`datetime.date`
         or for a given `dict` search the appropriate :class:`JsonObject` and return the object with values from the
@@ -308,8 +317,12 @@ class _JsonUtil(object):
                 return most_matching_json_object.from_json_dict(normalized_value)
 
             return normalized_value
-        elif cls.value_not_str_and_iterable(normalized_value):
-            return normalized_value
+        elif type(normalized_value) is list:
+            result = []
+            for item in normalized_value:
+                result.append(cls.reverse_normalized_value(item))
+
+            return result
         else:
             raise TypeError("The normalization for the object type `{}` cannot be reversed"
                             .format(type(normalized_value)))

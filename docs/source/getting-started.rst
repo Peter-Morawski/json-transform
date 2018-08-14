@@ -29,8 +29,8 @@ Now that you have successfully installed json-transform you can finally start de
 that you have to create a POPO (Plain Old Python Object). It can have any amount of methods, properties, etc...
 The important part is
 
-1. it needs to extend the :py:class:`JsonObject` class which has the core functions that allow you to serialize and
-deserialize your object.
+1. it needs to extend the :py:class:`JsonObject` class which has the core functions that allow you to serialize and deserialize your object.
+
 2. it needs to have at least one property getter decorated with the :py:func:`field` decorator.
 
 So let's define a simple data structure.
@@ -143,6 +143,12 @@ The :py:func:`to_json_file` function serializes the instance of an object as a J
 
 Deserializing
 -------------
+
+Just like for the serialization we have three different methods to deserialize our object:
+
+- :py:func:`from_json_dict`
+- :py:func:`from_json_string`
+- :py:func:`from_json_file`
 
 from_json_dict
 ++++++++++++++
