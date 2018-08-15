@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 
-import time
 import unittest
 import datetime
 from .datastructure import JsonObjectWithoutFields, NotSerializableObject, ExtendedCar, Container, \
     ContainerWithSomeDecoratorBeforeField, ContainerWithSomeDecoratorAfterField
 from jsontransform import ConfigurationError, DATE_FORMAT, DATETIME_FORMAT, DATETIME_TZ_FORMAT
 from dateutil import tz
+from .common import get_new_york_utc_offset
 
 
 class DictSerialization(unittest.TestCase):
@@ -552,7 +552,7 @@ class DictSerializationWithTimes(unittest.TestCase):
         self._datetime_timezone_helper("Asia/Tokyo", "+0900")
 
     def test_with_new_york_datetime(self):
-        self._datetime_timezone_helper("America/New_York", "-0500" if time.localtime().tm_isdst == 0 else "-0400")
+        self._datetime_timezone_helper("America/New_York", get_new_york_utc_offset())
 
     def _datetime_timezone_helper(self, timezone_name, utc_offset):
         dt = datetime.datetime.now(tz.gettz(timezone_name))
@@ -597,7 +597,7 @@ class DictSerializationWithTimes(unittest.TestCase):
         self._datetime_timezone_list_helper("Asia/Tokyo", "+0900")
 
     def test_list_with_new_york_datetime(self):
-        self._datetime_timezone_list_helper("America/New_York", "-0500" if time.localtime().tm_isdst == 0 else "-0400")
+        self._datetime_timezone_list_helper("America/New_York", get_new_york_utc_offset())
 
     def _datetime_timezone_list_helper(self, timezone_name, utc_offset):
         self._container.container = [
@@ -641,7 +641,7 @@ class DictSerializationWithTimes(unittest.TestCase):
         self._datetime_timezone_tuple_helper("Asia/Tokyo", "+0900")
 
     def test_tuple_with_new_york_datetime(self):
-        self._datetime_timezone_tuple_helper("America/New_York", "-0500" if time.localtime().tm_isdst == 0 else "-0400")
+        self._datetime_timezone_tuple_helper("America/New_York", get_new_york_utc_offset())
 
     def _datetime_timezone_tuple_helper(self, timezone_name, utc_offset):
         self._container.container = (
@@ -689,7 +689,7 @@ class DictSerializationWithTimes(unittest.TestCase):
         self._datetime_timezone_set_helper("Asia/Tokyo", "+0900")
 
     def test_set_with_new_york_datetime(self):
-        self._datetime_timezone_set_helper("America/New_York", "-0500" if time.localtime().tm_isdst == 0 else "-0400")
+        self._datetime_timezone_set_helper("America/New_York", get_new_york_utc_offset())
 
     def _datetime_timezone_set_helper(self, timezone_name, utc_offset):
         self._container.container = {
@@ -743,7 +743,7 @@ class DictSerializationWithTimes(unittest.TestCase):
         self._datetime_timezone_dict_helper("Asia/Tokyo", "+0900")
 
     def test_dict_with_new_york_datetime(self):
-        self._datetime_timezone_dict_helper("America/New_York", "-0500" if time.localtime().tm_isdst == 0 else "-0400")
+        self._datetime_timezone_dict_helper("America/New_York", get_new_york_utc_offset())
 
     def _datetime_timezone_dict_helper(self, timezone_name, utc_offset):
         self._container.container = {

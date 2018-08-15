@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 
-import time
 import unittest
 import datetime
 from jsontransform import ConfigurationError
 from .datastructure import ExtendedCar, Car, Container, JsonObjectWithoutFields
+from .common import get_new_york_utc_offset, get_new_york_utc_offset_as_int
 
 
 class DictDeserialization(unittest.TestCase):
@@ -241,10 +241,7 @@ class DictDeserializationTimes(unittest.TestCase):
         self._datetime_timezone_helper("+0900", 9)
 
     def test_new_york_datetime(self):
-        self._datetime_timezone_helper(
-            "-0500" if time.localtime().tm_isdst == 0 else "-0400",
-            -5 if time.localtime().tm_isdst == 0 else -4
-        )
+        self._datetime_timezone_helper(get_new_york_utc_offset(), get_new_york_utc_offset_as_int())
 
     def _datetime_timezone_helper(self, utc_offset, utc_offset_hours):
         d = {
@@ -328,10 +325,7 @@ class DictDeserializationTimes(unittest.TestCase):
         self._list_with_datetime_with_timezone_helper("+0900", 9)
 
     def test_list_with_new_york_datetime(self):
-        self._list_with_datetime_with_timezone_helper(
-            "-0500" if time.localtime().tm_isdst == 0 else "-0400",
-            -5 if time.localtime().tm_isdst == 0 else -4
-        )
+        self._list_with_datetime_with_timezone_helper(get_new_york_utc_offset(), get_new_york_utc_offset_as_int())
 
     def _list_with_datetime_with_timezone_helper(self, utc_offset, utc_offset_hours):
         d = {
