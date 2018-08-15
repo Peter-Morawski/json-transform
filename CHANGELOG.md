@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1.6 (2018-08-14)
+## 0.1.6 (2018-08-15)
 * fixed the deserialization of JSON objects inside a list/iterable
 * fixed regex for datetimes that have a timezone with negative utc offset 
 
