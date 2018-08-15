@@ -11,5 +11,5 @@
 
 * first release of the package
 * possibility to serialize and deserialize python objects by inheriting from **JsonObject** and annotating property
-getters with the **@field()** decorator
-* add custom name to fields by passing a string into the **@field()** decorator
+getters with the **field()** decorator
+* add custom name to fields by passing a string into the **field()** decorator
