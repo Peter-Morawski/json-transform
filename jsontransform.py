@@ -380,7 +380,7 @@ class _JsonDeserialization(object):
         return None
 
     @classmethod
-    def validate_if_required_fields_satisfied(cls, json_object, json_dict: dict):
+    def validate_if_required_fields_satisfied(cls, json_object, json_dict):
         """
         Check if all required fields of a :class:`JsonObject` are satisfied.
 
