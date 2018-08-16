@@ -2,7 +2,7 @@
 
 import unittest
 from tests.serialization import DictSerialization, DictSerializationWithTimes
-from tests.deserialization import DictDeserialization, DictDeserializationTimes
+from tests.deserialization import DictDeserialization, DictDeserializationTimes, DictDeserializationWithRequiredField
 
 
 def create_test_suite():
@@ -11,6 +11,7 @@ def create_test_suite():
     suite.addTest(unittest.makeSuite(DictSerializationWithTimes))
     suite.addTests(unittest.makeSuite(DictDeserialization))
     suite.addTest(unittest.makeSuite(DictDeserializationTimes))
+    suite.addTest(unittest.makeSuite(DictDeserializationWithRequiredField))
 
     return suite
 

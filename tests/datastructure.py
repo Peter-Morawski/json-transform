@@ -120,3 +120,30 @@ class ExtendedCar(Car):
     @horsepower.setter
     def horsepower(self, value):
         self._horsepower = value
+
+
+class JsonObjectWithRequiredField(JsonObject):
+    SOME_FIELD_NAME = "someField"
+    REQUIRED_FIELD_NAME = "requiredField"
+
+    def __init__(self):
+        self._some_field = None
+        self._required_field = None
+
+    @property
+    @field(SOME_FIELD_NAME)
+    def some_field(self):
+        return self._some_field
+
+    @some_field.setter
+    def some_field(self, value):
+        self._some_field = value
+
+    @property
+    @field(REQUIRED_FIELD_NAME, required=True)
+    def required_field(self):
+        return self._required_field
+
+    @required_field.setter
+    def required_field(self, value):
+        self._required_field = value

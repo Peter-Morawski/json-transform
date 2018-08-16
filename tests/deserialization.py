@@ -2,8 +2,8 @@
 
 import unittest
 import datetime
-from jsontransform import ConfigurationError
-from .datastructure import ExtendedCar, Car, Container, JsonObjectWithoutFields
+from jsontransform import ConfigurationError, FieldValidationError
+from .datastructure import ExtendedCar, Car, Container, JsonObjectWithoutFields, JsonObjectWithRequiredField
 from .common import get_new_york_utc_offset, get_new_york_utc_offset_as_int
 
 
@@ -366,3 +366,89 @@ class DictDeserializationTimes(unittest.TestCase):
 
         assert len(actual.container) == 1
         assert type(actual.container[0]) is str
+
+
+class DictDeserializationWithRequiredField(unittest.TestCase):
+    def setUp(self):
+        self._container = JsonObjectWithRequiredField()
+
+    def test_missing_required_field(self):
+        d = {
+            JsonObjectWithRequiredField.SOME_FIELD_NAME: "some string"
+        }
+
+        with self.assertRaises(FieldValidationError):
+            JsonObjectWithRequiredField.from_json_dict(d)
+
+    def test_satisfied_required_field(self):
+        d = {
+            JsonObjectWithRequiredField.SOME_FIELD_NAME: "some string",
+            JsonObjectWithRequiredField.REQUIRED_FIELD_NAME: "another string"
+        }
+        actual = JsonObjectWithRequiredField.from_json_dict(d)
+
+        self.assertEqual(d[JsonObjectWithRequiredField.REQUIRED_FIELD_NAME], actual.required_field)
+
+    def test_referenced_json_object_with_missing_required_field(self):
+        d = {
+            Container.CONTAINER_FIELD_NAME: {
+                JsonObjectWithRequiredField.SOME_FIELD_NAME: "some string",
+            }
+        }
+
+        with self.assertRaises(FieldValidationError):
+            Container.from_json_dict(d)
+
+    def test_list_with_json_object_with_missing_required_field(self):
+        d = {
+            Container.CONTAINER_FIELD_NAME: [
+                {
+                    JsonObjectWithRequiredField.SOME_FIELD_NAME: "some string",
+                }
+            ]
+        }
+
+        with self.assertRaises(FieldValidationError):
+            Container.from_json_dict(d)
+
+    def test_list_with_json_object_with_satisfied_required_field(self):
+        d = {
+            Container.CONTAINER_FIELD_NAME: [
+                {
+                    JsonObjectWithRequiredField.REQUIRED_FIELD_NAME: "some string"
+                }
+            ]
+        }
+        actual = Container.from_json_dict(d)
+
+        self.assertEqual(
+            d[Container.CONTAINER_FIELD_NAME][0][JsonObjectWithRequiredField.REQUIRED_FIELD_NAME],
+            actual.container[0].required_field
+        )
+
+    def test_dict_with_json_object_with_missing_required_field(self):
+        d = {
+            Container.CONTAINER_FIELD_NAME: {
+                "key1": {
+                    JsonObjectWithRequiredField.SOME_FIELD_NAME: "some string"
+                }
+            }
+        }
+
+        with self.assertRaises(FieldValidationError):
+            Container.from_json_dict(d)
+
+    def test_dict_with_json_object_with_satisfied_required_field(self):
+        d = {
+            Container.CONTAINER_FIELD_NAME: {
+                "key1": {
+                    JsonObjectWithRequiredField.REQUIRED_FIELD_NAME: "some string"
+                }
+            }
+        }
+        actual = Container.from_json_dict(d)
+
+        self.assertEqual(
+            d[Container.CONTAINER_FIELD_NAME]["key1"][JsonObjectWithRequiredField.REQUIRED_FIELD_NAME],
+            actual.container["key1"].required_field
+        )

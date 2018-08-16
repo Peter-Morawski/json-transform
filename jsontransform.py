@@ -17,14 +17,19 @@ _DATETIME_TZ_FORMAT_REGEX = r"^[0-9]{4}-[0-9]{1,}-[0-9]{1,}T[0-9]{2}:[0-9]{2}:[0
 _DATETIME_FORMAT_REGEX = r"^[0-9]{4}-[0-9]{1,}-[0-9]{1,}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
 
 _JSON_FIELD_NAME = "_json_field_name"
+_JSON_FIELD_REQUIRED = "_json_field_required"
 
 
 class ConfigurationError(Exception):
     pass
 
 
+class FieldValidationError(Exception):
+    pass
+
+
 @decorator
-def field(func, field_name=None, *args, **kwargs):
+def field(func, field_name=None, required=False, *args, **kwargs):
     """
     Decorator to mark a property getter inside a class (which must inherit from :class:`JsonObject`) as a field that
     can be serialized to a JSON object and deserialized from a JSON object.
@@ -54,9 +59,12 @@ def field(func, field_name=None, *args, **kwargs):
     the value for the JSON field.
     :param field_name: An optional name for the field. If this is not defined the the name of the property getter will
     be used.
+    :param required:
     """
     if not hasattr(func, _JSON_FIELD_NAME):
         setattr(func, _JSON_FIELD_NAME, field_name or func.__name__)
+    if not hasattr(func, _JSON_FIELD_REQUIRED):
+        setattr(func, _JSON_FIELD_REQUIRED, required)
 
     return func(*args, **kwargs)
 
@@ -103,8 +111,8 @@ class JsonObject(object):
                 self._age = value
 
         :param json_string: The string with the JSON object which should be deserialized into this object.
-        :raises ConfigurationError:
-        :raises TypeError:
+        :raises ConfigurationError: When this class doesn't define any JSON fields.
+        :raises TypeError: When this class didn't contain any fields defined in the JSON file.
         :return: An instance of this class.
         """
         if json_string is None:
@@ -167,14 +175,16 @@ class JsonObject(object):
             raise TypeError("'NoneType' is not deserializable")
 
         result = cls()
-        properties = _JsonUtil.get_decorated_properties(result)
+        _JsonDeserialization.validate_if_required_fields_satisfied(result, json_dict)
+
+        properties = _JsonCommon.get_decorated_properties(result)
         if not properties:
             raise ConfigurationError("The class doesn't define any fields which can be serialized into JSON")
         if all(properties.get(key) is None for key in json_dict.keys()):
             raise TypeError("No matching fields found to build this class")
 
         for p in properties.keys():
-            value = _JsonUtil.reverse_normalized_value(json_dict.get(p))
+            value = _JsonDeserialization.reverse_normalized_value(json_dict.get(p))
             if value is not None:
                 properties[p].fset(result, value)
 
@@ -189,7 +199,7 @@ class JsonObject(object):
         :return: The `dict` representation of this object.
         """
         result = {}
-        properties = _JsonUtil.get_decorated_properties(self)
+        properties = _JsonCommon.get_decorated_properties(self)
         if not properties.keys():
             raise ConfigurationError("The class doesn't define any fields which can be serialized into JSON")
 
@@ -198,7 +208,7 @@ class JsonObject(object):
             property_value = properties[key].fget(self)
 
             if key:
-                result[key] = _JsonUtil.get_normalized_value(property_value)
+                result[key] = _JsonSerialization.get_normalized_value(property_value)
 
         return result
 
@@ -206,7 +216,7 @@ class JsonObject(object):
 JSONObject = JsonObject
 
 
-class _JsonUtil(object):
+class _JsonCommon(object):
     @classmethod
     def get_decorated_properties(cls, obj):
         """
@@ -225,107 +235,10 @@ class _JsonUtil(object):
                     member[1].fget(obj)
                     wrapper = member[1].fget.__wrapped__
 
-                    if cls.get_json_field_name(wrapper):
-                        result[cls.get_json_field_name(wrapper)] = member[1]
+                    if _JsonField.get_field_name(wrapper):
+                        result[_JsonField.get_field_name(wrapper)] = member[1]
 
         return result
-
-    @classmethod
-    def get_json_field_name(cls, property_getter):
-        """
-        Get the Value of the _JSON_FIELD_NAME attribute of a property getter function.
-
-        NOTE
-        ====
-        If the property getter is annotated with multiple decorators it will search all wrappers.
-
-        :param property_getter: The function which should be checked for the _JSON_FIELD_NAME attribute.
-        :return: The name of the JSON field; `None` otherwise.
-        """
-        if hasattr(property_getter, _JSON_FIELD_NAME):
-            return getattr(property_getter, _JSON_FIELD_NAME)
-
-        if "__wrapped__" in property_getter.__dict__.keys():
-            return cls.get_json_field_name(property_getter.__wrapped__)
-
-        return None
-
-    @classmethod
-    def get_normalized_value(cls, value):
-        """
-        Check if a value is JSON serializable and if necessary normalize/transform it so that it can be serialized.
-
-        :param value: The value which should be checked and possibly normalized/transformed.
-        :raises TypeError: When the type of the value is not JSON serializable.
-        :return: The normalized value which can be serialized.
-        """
-        if value is None:
-            return value
-        elif cls.value_is_simple_type(value):
-            return value
-        elif isinstance(value, dict):
-            result = {}
-            for key in value.keys():
-                result[key] = cls.get_normalized_value(value[key])
-
-            return result
-        elif cls.value_not_str_and_iterable(value):
-            result = []
-            for item in value:
-                result.append(cls.get_normalized_value(item))
-
-            return result
-        elif isinstance(value, JsonObject):
-            return value.to_json_dict()
-        elif isinstance(value, datetime.datetime):
-            if value.tzinfo:
-                return value.strftime(DATETIME_TZ_FORMAT)
-            else:
-                return value.strftime(DATETIME_FORMAT)
-        elif isinstance(value, datetime.date):
-            return value.strftime(DATE_FORMAT)
-        else:
-            raise TypeError("The object type `{}` is not JSON serializable".format(type(value)))
-
-    @classmethod
-    def reverse_normalized_value(cls, normalized_value):
-        """
-        Reverse the normalization of a value e.g. from a date string like '2018-08-09' create a :class:`datetime.date`
-        or for a given `dict` search the appropriate :class:`JsonObject` and return the object with values from the
-        `dict`. See also `get_normalized_value()`
-
-        :param normalized_value: The value of which the normalization should be reversed.
-        :raises TypeError: When the normalization of the value cannot be reversed.
-        :raises ValueError: When a passed value did not match the expectations e.g. datetime.date day was 90
-        :return: The reversed value of the normalized field.
-        """
-        if normalized_value is None:
-            return normalized_value
-        elif cls.value_is_simple_type(normalized_value):
-            if type(normalized_value) is str:
-                if re.match(_DATE_FORMAT_REGEX, normalized_value):
-                    return datetime.datetime.strptime(normalized_value, DATE_FORMAT).date()
-                elif re.match(_DATETIME_FORMAT_REGEX, normalized_value):
-                    return datetime.datetime.strptime(normalized_value, DATETIME_FORMAT)
-                elif re.match(_DATETIME_TZ_FORMAT_REGEX, normalized_value):
-                    return parser.isoparse(normalized_value)
-
-            return normalized_value
-        elif isinstance(normalized_value, dict):
-            most_matching_json_object = cls.get_most_matching_json_object(normalized_value)
-            if most_matching_json_object:
-                return most_matching_json_object.from_json_dict(normalized_value)
-
-            return normalized_value
-        elif type(normalized_value) is list:
-            result = []
-            for item in normalized_value:
-                result.append(cls.reverse_normalized_value(item))
-
-            return result
-        else:
-            raise TypeError("The normalization for the object type `{}` cannot be reversed"
-                            .format(type(normalized_value)))
 
     @classmethod
     def value_is_simple_type(cls, value):
@@ -351,6 +264,87 @@ class _JsonUtil(object):
         """
         return type(value) is not str and isinstance(value, collections.Iterable)
 
+
+class _JsonSerialization(object):
+    @classmethod
+    def get_normalized_value(cls, value):
+        """
+        Check if a value is JSON serializable and if necessary normalize/transform it so that it can be serialized.
+
+        :param value: The value which should be checked and possibly normalized/transformed.
+        :raises TypeError: When the type of the value is not JSON serializable.
+        :return: The normalized value which can be serialized.
+        """
+        if value is None:
+            return value
+        elif _JsonCommon.value_is_simple_type(value):
+            return value
+        elif isinstance(value, dict):
+            result = {}
+            for key in value.keys():
+                result[key] = cls.get_normalized_value(value[key])
+
+            return result
+        elif _JsonCommon.value_not_str_and_iterable(value):
+            result = []
+            for item in value:
+                result.append(cls.get_normalized_value(item))
+
+            return result
+        elif isinstance(value, JsonObject):
+            return value.to_json_dict()
+        elif isinstance(value, datetime.datetime):
+            if value.tzinfo:
+                return value.strftime(DATETIME_TZ_FORMAT)
+            else:
+                return value.strftime(DATETIME_FORMAT)
+        elif isinstance(value, datetime.date):
+            return value.strftime(DATE_FORMAT)
+        else:
+            raise TypeError("The object type `{}` is not JSON serializable".format(type(value)))
+
+
+class _JsonDeserialization(object):
+    @classmethod
+    def reverse_normalized_value(cls, normalized_value):
+        """
+        Reverse the normalization of a value e.g. from a date string like '2018-08-09' create a :class:`datetime.date`
+        or for a given `dict` search the appropriate :class:`JsonObject` and return the object with values from the
+        `dict`. See also `get_normalized_value()`
+
+        :param normalized_value: The value of which the normalization should be reversed.
+        :raises TypeError: When the normalization of the value cannot be reversed.
+        :raises ValueError: When a passed value did not match the expectations e.g. datetime.date day was 90
+        :return: The reversed value of the normalized field.
+        """
+        if normalized_value is None:
+            return normalized_value
+        elif _JsonCommon.value_is_simple_type(normalized_value):
+            if type(normalized_value) is str:
+                if re.match(_DATE_FORMAT_REGEX, normalized_value):
+                    return datetime.datetime.strptime(normalized_value, DATE_FORMAT).date()
+                elif re.match(_DATETIME_FORMAT_REGEX, normalized_value):
+                    return datetime.datetime.strptime(normalized_value, DATETIME_FORMAT)
+                elif re.match(_DATETIME_TZ_FORMAT_REGEX, normalized_value):
+                    return parser.isoparse(normalized_value)
+
+            return normalized_value
+        elif isinstance(normalized_value, dict):
+            most_matching_json_object = cls.get_most_matching_json_object(normalized_value)
+            if most_matching_json_object:
+                return most_matching_json_object.from_json_dict(normalized_value)
+
+            return {key: cls.reverse_normalized_value(normalized_value[key]) for key in normalized_value.keys()}
+        elif type(normalized_value) is list:
+            result = []
+            for item in normalized_value:
+                result.append(cls.reverse_normalized_value(item))
+
+            return result
+        else:
+            raise TypeError("The normalization for the object type `{}` cannot be reversed"
+                            .format(type(normalized_value)))
+
     @classmethod
     def get_most_matching_json_object(cls, value):
         """
@@ -366,7 +360,7 @@ class _JsonUtil(object):
 
         for json_object in JsonObject.__subclasses__():
             occurrences = 0
-            properties = cls.get_decorated_properties(json_object())
+            properties = _JsonCommon.get_decorated_properties(json_object())
 
             for value_property in value.keys():
                 for object_property in properties.keys():
@@ -385,3 +379,60 @@ class _JsonUtil(object):
 
         return None
 
+    @classmethod
+    def validate_if_required_fields_satisfied(cls, json_object, json_dict: dict):
+        """
+        Check if all required fields of a :class:`JsonObject` are satisfied.
+
+        :param json_object: The JsonObject which should be checked.
+        :raises FieldValidationError: When a required field is missing.
+        """
+        required_field_names = []
+        properties = _JsonCommon.get_decorated_properties(json_object)
+        for key in properties.keys():
+            if _JsonField.get_required(properties[key].fget):
+                required_field_names.append(key)
+
+        for field_name in required_field_names:
+            if field_name not in json_dict.keys():
+                raise FieldValidationError("The field `{}` is missing".format(field_name))
+
+
+class _JsonField(object):
+    @classmethod
+    def get_field_name(cls, property_getter):
+        """
+        Get the Value of the _JSON_FIELD_NAME attribute of a property getter function.
+
+        NOTE
+        ====
+        If the property getter is annotated with multiple decorators it will search all wrappers.
+
+        :param property_getter: The function which should be checked for the _JSON_FIELD_NAME attribute.
+        :return: The name of the field if it could be found; `None` otherwise.
+        """
+        return cls._get_field_attribute(property_getter, _JSON_FIELD_NAME)
+
+    @classmethod
+    def get_required(cls, property_getter):
+        """
+        Get the value of the _JSON_FIELD_REQUIRED attribute of a property getter function.
+
+        NOTE
+        ====
+        If the property getter is annotated with multiple decorators it will search all wrappers.
+
+        :param property_getter: The function which should be checked for the _JSON_FIELD_REQUIRED attribute.
+        :return: `True` if the field is required: `False` otherwise.
+        """
+        return cls._get_field_attribute(property_getter, _JSON_FIELD_REQUIRED) or False
+
+    @classmethod
+    def _get_field_attribute(cls, func, attr_name):
+        if hasattr(func, attr_name):
+            return getattr(func, attr_name)
+
+        if "__wrapped__" in func.__dict__.keys():
+            return cls._get_field_attribute(func.__wrapped__, attr_name)
+
+        return None
