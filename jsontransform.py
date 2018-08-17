@@ -59,7 +59,7 @@ def field(func, field_name=None, required=False, *args, **kwargs):
     the value for the JSON field.
     :param field_name: An optional name for the field. If this is not defined the the name of the property getter will
     be used.
-    :param required:
+    :param required: Indicates if this field is required which just applies for the deserialization.
     """
     if not hasattr(func, _JSON_FIELD_NAME):
         setattr(func, _JSON_FIELD_NAME, field_name or func.__name__)
@@ -113,6 +113,8 @@ class JsonObject(object):
         :param json_string: The string with the JSON object which should be deserialized into this object.
         :raises ConfigurationError: When this class doesn't define any JSON fields.
         :raises TypeError: When this class didn't contain any fields defined in the JSON file.
+        :raises FieldValidationError: When a field did not match the defined expectations e.g. a required field is
+        missing.
         :return: An instance of this class.
         """
         if json_string is None:
@@ -141,6 +143,8 @@ class JsonObject(object):
         deserialized.
         :raises ConfigurationError: When this class doesn't define any JSON fields.
         :raises TypeError: When this class didn't contain any fields defined in the JSON file.
+        :raises FieldValidationError: When a field did not match the defined expectations e.g. a required field is
+        missing.
         :return: An instance of this class with the values of the JSON file.
         """
         if f is None:
@@ -169,6 +173,8 @@ class JsonObject(object):
         :param json_dict: The dict from which this class should be deserialized.
         :raises ConfigurationError: When this class doesn't define any JSON fields.
         :raises TypeError: When this class didn't contain any fields defined by the dict.
+        :raises FieldValidationError: When a field did not match the defined expectations e.g. a required field is
+        missing.
         :return: An instance of this class with the values of the dict.
         """
         if json_dict is None:

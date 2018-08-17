@@ -186,6 +186,19 @@ class DictDeserialization(unittest.TestCase):
         self.assertEqual(d[Car.FIELD_MODEL_NAME_NAME], actual.model_name)
         self.assertEqual(d[Car.FIELD_MAX_SPEED_NAME], actual.max_speed)
 
+    def test_dict_with_json_object(self):
+        d = {
+            Container.CONTAINER_FIELD_NAME: {
+                "key1": {
+                    Container.CONTAINER_FIELD_NAME: "some string"
+                }
+            }
+        }
+        actual = Container.from_json_dict(d)
+
+        assert type(actual.container) is dict
+        assert type(actual.container["key1"]) is Container
+
 
 class DictDeserializationTimes(unittest.TestCase):
     DATE = "2018-08-13"

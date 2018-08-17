@@ -83,4 +83,4 @@ customer.first_name
 ### More
 
 * Check out the [documentation](https://json-transform.readthedocs.io/en/latest/).
-* Check out the [changelog](https://bitbucket.org/Peter-Morawski/json-transform/src/master/CHANGELOG.md)
+* Check out the [history](https://bitbucket.org/Peter-Morawski/json-transform/src/master/HISTORY.md)
