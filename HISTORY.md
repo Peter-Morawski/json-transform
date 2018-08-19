@@ -1,5 +1,10 @@
 # History
 
+## 0.1.8 (2018-08-19)
+
+* added the **nullable** parameter to the `field` decorator which indicates that a field is nullable during
+serialization and deserialization
+
 ## 0.1.7 (2018-08-16)
 
 * added the **required** parameter to the `field` decorator which indicates that a field is required during the

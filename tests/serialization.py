@@ -3,8 +3,8 @@
 import unittest
 import datetime
 from .datastructure import JsonObjectWithoutFields, NotSerializableObject, ExtendedCar, Container, \
-    ContainerWithSomeDecoratorBeforeField, ContainerWithSomeDecoratorAfterField
-from jsontransform import ConfigurationError, DATE_FORMAT, DATETIME_FORMAT, DATETIME_TZ_FORMAT
+    ContainerWithSomeDecoratorBeforeField, ContainerWithSomeDecoratorAfterField, JsonObjectWithNotNullableField
+from jsontransform import ConfigurationError, DATE_FORMAT, DATETIME_FORMAT, DATETIME_TZ_FORMAT, FieldValidationError
 from dateutil import tz
 from .common import get_new_york_utc_offset
 
@@ -772,3 +772,62 @@ class DictSerializationWithTimes(unittest.TestCase):
 
         for item in actual[Container.CONTAINER_FIELD_NAME]:
             assert item.endswith(utc_offset)
+
+
+class DictSerializationWithNotNullable(unittest.TestCase):
+    def test_not_nullable_field_which_is_null(self):
+        json_object = JsonObjectWithNotNullableField()
+        json_object.not_nullable = None
+
+        with self.assertRaises(FieldValidationError):
+            json_object.to_json_dict()
+
+    def test_referenced_json_object_with_not_nullable_field_which_is_null(self):
+        container = Container()
+        container.container = JsonObjectWithNotNullableField()
+        container.container.not_nullable = None
+
+        with self.assertRaises(FieldValidationError):
+            container.to_json_dict()
+
+    def test_list_with_json_object_with_not_nullable_field_which_is_null(self):
+        json_object = JsonObjectWithNotNullableField()
+        json_object.not_nullable = None
+
+        container = Container()
+        container.container = [json_object]
+
+        with self.assertRaises(FieldValidationError):
+            container.to_json_dict()
+
+    def test_tuple_with_json_object_with_not_nullable_field_which_is_null(self):
+        json_object = JsonObjectWithNotNullableField()
+        json_object.not_nullable = None
+
+        container = Container()
+        container.container = (json_object,)
+
+        with self.assertRaises(FieldValidationError):
+            container.to_json_dict()
+
+    def test_set_with_json_object_with_not_nullable_field_which_is_null(self):
+        json_object = JsonObjectWithNotNullableField()
+        json_object.not_nullable = None
+
+        container = Container()
+        container.container = {json_object,}
+
+        with self.assertRaises(FieldValidationError):
+            container.to_json_dict()
+
+    def test_dict_with_json_object_with_not_nullable_field_which_is_null(self):
+        json_object = JsonObjectWithNotNullableField()
+        json_object.not_nullable = None
+
+        container = Container()
+        container.container = {
+            "key1": json_object
+        }
+
+        with self.assertRaises(FieldValidationError):
+            container.to_json_dict()

@@ -147,3 +147,19 @@ class JsonObjectWithRequiredField(JsonObject):
     @required_field.setter
     def required_field(self, value):
         self._required_field = value
+
+
+class JsonObjectWithNotNullableField(JsonObject):
+    NOT_NULLABLE_NAME = "notNullable"
+
+    def __init__(self):
+        self._not_nullable = 0
+
+    @property
+    @field(NOT_NULLABLE_NAME, nullable=False)
+    def not_nullable(self):
+        return self._not_nullable
+
+    @not_nullable.setter
+    def not_nullable(self, value):
+        self._not_nullable = value

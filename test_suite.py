@@ -1,17 +1,20 @@
 # -*- coding: utf-8 -*-
 
 import unittest
-from tests.serialization import DictSerialization, DictSerializationWithTimes
-from tests.deserialization import DictDeserialization, DictDeserializationTimes, DictDeserializationWithRequiredField
+from tests.serialization import DictSerialization, DictSerializationWithTimes, DictSerializationWithNotNullable
+from tests.deserialization import DictDeserialization, DictDeserializationTimes, DictDeserializationWithRequiredField, \
+    DictDeserializationWithNotNullable
 
 
 def create_test_suite():
     suite = unittest.TestSuite()
     suite.addTest(unittest.makeSuite(DictSerialization))
     suite.addTest(unittest.makeSuite(DictSerializationWithTimes))
+    suite.addTest(unittest.makeSuite(DictSerializationWithNotNullable))
     suite.addTests(unittest.makeSuite(DictDeserialization))
     suite.addTest(unittest.makeSuite(DictDeserializationTimes))
     suite.addTest(unittest.makeSuite(DictDeserializationWithRequiredField))
+    suite.addTest(unittest.makeSuite(DictDeserializationWithNotNullable))
 
     return suite
 

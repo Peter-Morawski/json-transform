@@ -18,6 +18,7 @@ _DATETIME_FORMAT_REGEX = r"^[0-9]{4}-[0-9]{1,}-[0-9]{1,}T[0-9]{2}:[0-9]{2}:[0-9]
 
 _JSON_FIELD_NAME = "_json_field_name"
 _JSON_FIELD_REQUIRED = "_json_field_required"
+_JSON_FIELD_NULLABLE = "_json_field_nullable"
 
 
 class ConfigurationError(Exception):
@@ -29,7 +30,7 @@ class FieldValidationError(Exception):
 
 
 @decorator
-def field(func, field_name=None, required=False, *args, **kwargs):
+def field(func, field_name=None, required=False, nullable=True, *args, **kwargs):
     """
     Decorator to mark a property getter inside a class (which must inherit from :class:`JsonObject`) as a field that
     can be serialized to a JSON object and deserialized from a JSON object.
@@ -60,11 +61,15 @@ def field(func, field_name=None, required=False, *args, **kwargs):
     :param field_name: An optional name for the field. If this is not defined the the name of the property getter will
     be used.
     :param required: Indicates if this field is required which just applies for the deserialization.
+    :param nullable: Indicates if the value of this field can be `None` which will be validated during serialization
+    and deserialization.
     """
     if not hasattr(func, _JSON_FIELD_NAME):
         setattr(func, _JSON_FIELD_NAME, field_name or func.__name__)
     if not hasattr(func, _JSON_FIELD_REQUIRED):
         setattr(func, _JSON_FIELD_REQUIRED, required)
+    if not hasattr(func, _JSON_FIELD_NULLABLE):
+        setattr(func, _JSON_FIELD_NULLABLE, nullable)
 
     return func(*args, **kwargs)
 
@@ -173,8 +178,7 @@ class JsonObject(object):
         :param json_dict: The dict from which this class should be deserialized.
         :raises ConfigurationError: When this class doesn't define any JSON fields.
         :raises TypeError: When this class didn't contain any fields defined by the dict.
-        :raises FieldValidationError: When a field did not match the defined expectations e.g. a required field is
-        missing.
+        :raises FieldValidationError: When a field constraint has been violated e.g. a required field is missing.
         :return: An instance of this class with the values of the dict.
         """
         if json_dict is None:
@@ -191,8 +195,9 @@ class JsonObject(object):
 
         for p in properties.keys():
             value = _JsonDeserialization.reverse_normalized_value(json_dict.get(p))
-            if value is not None:
-                properties[p].fset(result, value)
+            properties[p].fset(result, value)
+
+        _JsonValidation.validate_fields(result)
 
         return result
 
@@ -202,6 +207,7 @@ class JsonObject(object):
 
         :raises ConfigurationError: When this class doesn't define any property getter annotated with the ``field()`` decorator.
         :raises TypeError: When a field in this class couldn't be serialized.
+        :raises FieldValidationError: When a field constraint has been violated e.g. a required field is missing.
         :return: The `dict` representation of this object.
         """
         result = {}
@@ -215,6 +221,8 @@ class JsonObject(object):
 
             if key:
                 result[key] = _JsonSerialization.get_normalized_value(property_value)
+
+        _JsonValidation.validate_fields(self)
 
         return result
 
@@ -434,6 +442,20 @@ class _JsonField(object):
         return cls._get_field_attribute(property_getter, _JSON_FIELD_REQUIRED) or False
 
     @classmethod
+    def get_nullable(cls, property_getter):
+        """
+        Get the value of the _JSON_FIELD_NULLABLE attribute of a property getter function.
+
+        NOTE
+        ====
+        If the property getter is annotated wit multiple decorators it will search all wrappers.
+
+        :param property_getter: The function which should be checked for the _JSON_FIELD_NULLABLE attribute.
+        :return: `True` if the field is nullable; `False` otherwise.
+        """
+        return cls._get_field_attribute(property_getter, _JSON_FIELD_NULLABLE) or False
+
+    @classmethod
     def _get_field_attribute(cls, func, attr_name):
         if hasattr(func, attr_name):
             return getattr(func, attr_name)
@@ -442,3 +464,46 @@ class _JsonField(object):
             return cls._get_field_attribute(func.__wrapped__, attr_name)
 
         return None
+
+
+class _JsonValidation(object):
+    @classmethod
+    def validate_fields(cls, json_object):
+        """
+        Validate the fields of a :class:`JsonObject`.
+
+        :param json_object: The `JsonObject` which should be validted.
+        :raises FieldValidationError: When a field violated it's constraints.
+        """
+        properties = _JsonCommon.get_decorated_properties(json_object)
+        cls._validate_not_nullable_fields(json_object, properties)
+
+    @classmethod
+    def _validate_not_nullable_fields(cls, json_object, properties):
+        """
+        Validate if all fields of a :class:`JsonObject` which are **NOT** nullable are **NOT** null.
+
+        :param json_object: The `JsonObject` which should be checked.
+        :param properties: The properties of the passed `JsonObject` which are decorated with the `field` decorator as
+        a dict of the field name and the property.
+        :raises FieldValidationError: When a property was null even though it wasn't allowed to.
+        """
+        for key in properties:
+            if not _JsonField.get_nullable(properties[key].fget):
+                value = properties[key].fget(json_object)
+                cls._check_for_null_values(key, value)
+
+    @classmethod
+    def _check_for_null_values(cls, field_name, value):
+        if value is None:
+            raise FieldValidationError("The field `{}` is not allowed to be None".format(field_name))
+        elif isinstance(value, dict):
+            for k, v in value.items():
+                cls._check_for_null_values(field_name, v)
+        elif _JsonCommon.value_not_str_and_iterable(value):
+            for item in value:
+                cls._check_for_null_values(field_name, item)
+        elif isinstance(value, JsonObject):
+            properties = _JsonCommon.get_decorated_properties(value)
+            cls._validate_not_nullable_fields(value, properties)
+
