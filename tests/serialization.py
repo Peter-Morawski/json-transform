@@ -4,7 +4,8 @@ import unittest
 import datetime
 from .datastructure import JsonObjectWithoutFields, NotSerializableObject, ExtendedCar, Container, \
     ContainerWithSomeDecoratorBeforeField, ContainerWithSomeDecoratorAfterField, JsonObjectWithNotNullableField
-from jsontransform import ConfigurationError, DATE_FORMAT, DATETIME_FORMAT, DATETIME_TZ_FORMAT, FieldValidationError
+from jsontransform import ConfigurationError, DATE_FORMAT, DATETIME_FORMAT, DATETIME_TZ_FORMAT, FieldValidationError, \
+    Serializer
 from dateutil import tz
 from .common import get_new_york_utc_offset
 
@@ -16,118 +17,118 @@ class DictSerialization(unittest.TestCase):
     def test_json_object_with_some_decorator_before_field_decorator(self):
         self._container = ContainerWithSomeDecoratorBeforeField()
         self._container.container = "some string"
-        actual = self._container.to_json_dict()
+        actual = Serializer.to_json_dict(self._container)
 
         self.assertIn(Container.CONTAINER_FIELD_NAME, actual.keys())
 
     def test_json_object_with_some_decorator_after_field_decorator(self):
         self._container = ContainerWithSomeDecoratorAfterField()
         self._container.container = "some value"
-        actual = self._container.to_json_dict()
+        actual = Serializer.to_json_dict(self._container)
 
         self.assertIn(Container.CONTAINER_FIELD_NAME, actual.keys())
 
     def test_none(self):
         self._container.container = None
-        actual = self._container.to_json_dict()
+        actual = Serializer.to_json_dict(self._container)
 
         self.assertEqual(self._container.container, actual[Container.CONTAINER_FIELD_NAME])
 
     def test_str(self):
         self._container.container = "some string"
-        actual = self._container.to_json_dict()
+        actual = Serializer.to_json_dict(self._container)
 
         assert type(actual[Container.CONTAINER_FIELD_NAME]) is str
         self.assertEqual(self._container.container, actual[Container.CONTAINER_FIELD_NAME])
 
     def test_int(self):
         self._container.container = 42
-        actual = self._container.to_json_dict()
+        actual = Serializer.to_json_dict(self._container)
 
         assert type(actual[Container.CONTAINER_FIELD_NAME]) is int
         self.assertEqual(self._container.container, actual[Container.CONTAINER_FIELD_NAME])
 
     def test_float(self):
         self._container.container = 42.1337
-        actual = self._container.to_json_dict()
+        actual = Serializer.to_json_dict(self._container)
 
         assert type(actual[Container.CONTAINER_FIELD_NAME]) is float
         self.assertEqual(self._container.container, actual[Container.CONTAINER_FIELD_NAME])
 
     def test_json_object(self):
         self._container.container = Container()
-        actual = self._container.to_json_dict()
+        actual = Serializer.to_json_dict(self._container)
 
         assert type(actual[Container.CONTAINER_FIELD_NAME]) is dict
-        self.assertDictEqual(self._container.container.to_json_dict(), actual[Container.CONTAINER_FIELD_NAME])
+        self.assertDictEqual(Serializer.to_json_dict(self._container.container), actual[Container.CONTAINER_FIELD_NAME])
 
     def test_json_object_without_fields(self):
         self._container.container = JsonObjectWithoutFields()
 
         with self.assertRaises(ConfigurationError):
-            self._container.to_json_dict()
+            Serializer.to_json_dict(self._container)
 
     def test_not_serializable_object(self):
         self._container.container = NotSerializableObject()
 
         with self.assertRaises(TypeError):
-            self._container.to_json_dict()
+            Serializer.to_json_dict(self._container)
 
     def test_empty_list(self):
         self._container.container = []
-        actual = self._container.to_json_dict()
+        actual = Serializer.to_json_dict(self._container)
 
         assert type(actual[Container.CONTAINER_FIELD_NAME]) is list
         self.assertListEqual(self._container.container, actual[Container.CONTAINER_FIELD_NAME])
 
     def test_list_with_none(self):
         self._container.container = [None, None, None]
-        actual = self._container.to_json_dict()
+        actual = Serializer.to_json_dict(self._container)
 
         assert type(actual[Container.CONTAINER_FIELD_NAME]) is list
         self.assertListEqual(self._container.container, actual[Container.CONTAINER_FIELD_NAME])
 
     def test_list_with_str(self):
         self._container.container = ["some string", "another string"]
-        actual = self._container.to_json_dict()
+        actual = Serializer.to_json_dict(self._container)
 
         assert type(actual[Container.CONTAINER_FIELD_NAME]) is list
         self.assertListEqual(self._container.container, actual[Container.CONTAINER_FIELD_NAME])
 
     def test_list_with_int(self):
         self._container.container = [1, 2, 3, 4]
-        actual = self._container.to_json_dict()
+        actual = Serializer.to_json_dict(self._container)
 
         assert type(actual[Container.CONTAINER_FIELD_NAME]) is list
         self.assertListEqual(self._container.container, actual[Container.CONTAINER_FIELD_NAME])
 
     def test_list_with_float(self):
         self._container.container = [1.123, 2.123, 3.123, 4.123]
-        actual = self._container.to_json_dict()
+        actual = Serializer.to_json_dict(self._container)
 
         assert type(actual[Container.CONTAINER_FIELD_NAME]) is list
         self.assertListEqual(self._container.container, actual[Container.CONTAINER_FIELD_NAME])
 
     def test_list_with_json_object(self):
         self._container.container = [Container(), Container(), Container()]
-        actual = self._container.to_json_dict()
+        actual = Serializer.to_json_dict(self._container)
 
         assert type(actual[Container.CONTAINER_FIELD_NAME]) is list
 
-        expected = [item.to_json_dict() for item in self._container.container]
+        expected = [Serializer.to_json_dict(item) for item in self._container.container]
         self.assertListEqual(expected, actual[Container.CONTAINER_FIELD_NAME])
 
     def test_list_with_json_object_without_fields(self):
         self._container.container = [JsonObjectWithoutFields(), JsonObjectWithoutFields()]
 
         with self.assertRaises(ConfigurationError):
-            self._container.to_json_dict()
+            Serializer.to_json_dict(self._container)
 
     def test_list_with_not_serializable_object(self):
         self._container.container = [NotSerializableObject(), NotSerializableObject()]
 
         with self.assertRaises(TypeError):
-            self._container.to_json_dict()
+            Serializer.to_json_dict(self._container)
 
     def test_list_with_list(self):
         self._container.container = [
@@ -138,7 +139,7 @@ class DictSerialization(unittest.TestCase):
             [None, None, None],
             [Container(), Container()],
         ]
-        actual = self._container.to_json_dict()
+        actual = Serializer.to_json_dict(self._container)
 
         assert type(actual[Container.CONTAINER_FIELD_NAME]) is list
 
@@ -146,13 +147,13 @@ class DictSerialization(unittest.TestCase):
         for lst in expected:
             for i, item in enumerate(lst):
                 if type(item) is Container:
-                    lst[i] = lst[i].to_json_dict()
+                    lst[i] = Serializer.to_json_dict(lst[i])
 
         self.assertListEqual(expected, actual[Container.CONTAINER_FIELD_NAME])
 
     def test_list_with_tuple(self):
         self._container.container = [tuple([]), tuple([1, 2, 3])]
-        actual = self._container.to_json_dict()
+        actual = Serializer.to_json_dict(self._container)
 
         assert type(actual[Container.CONTAINER_FIELD_NAME]) is list
 
@@ -161,7 +162,7 @@ class DictSerialization(unittest.TestCase):
 
     def test_list_with_set(self):
         self._container.container = [set([]), {1, 2, 3}]
-        actual = self._container.to_json_dict()
+        actual = Serializer.to_json_dict(self._container)
 
         assert type(actual[Container.CONTAINER_FIELD_NAME]) is list
 
@@ -170,7 +171,7 @@ class DictSerialization(unittest.TestCase):
 
     def test_list_with_dict(self):
         self._container.container = [{"key1": "", "key2": None}, {"key1": 1, "key2": 1.123}]
-        actual = self._container.to_json_dict()
+        actual = Serializer.to_json_dict(self._container)
 
         assert type(actual[Container.CONTAINER_FIELD_NAME]) is list
         for index, item in enumerate(actual[Container.CONTAINER_FIELD_NAME]):
@@ -178,7 +179,7 @@ class DictSerialization(unittest.TestCase):
 
     def test_empty_tuple(self):
         self._container.container = tuple([])
-        actual = self._container.to_json_dict()
+        actual = Serializer.to_json_dict(self._container)
 
         assert type(actual[Container.CONTAINER_FIELD_NAME]) is list
 
@@ -187,7 +188,7 @@ class DictSerialization(unittest.TestCase):
 
     def test_tuple_with_none(self):
         self._container.container = (None, None, None)
-        actual = self._container.to_json_dict()
+        actual = Serializer.to_json_dict(self._container)
 
         assert type(actual[Container.CONTAINER_FIELD_NAME]) is list
 
@@ -196,7 +197,7 @@ class DictSerialization(unittest.TestCase):
 
     def test_tuple_with_str(self):
         self._container.container = ("some string", "another string", "and another string...")
-        actual = self._container.to_json_dict()
+        actual = Serializer.to_json_dict(self._container)
 
         assert type(actual[Container.CONTAINER_FIELD_NAME]) is list
 
@@ -205,7 +206,7 @@ class DictSerialization(unittest.TestCase):
 
     def test_tuple_with_int(self):
         self._container.container = (1, 2, 3, 4)
-        actual = self._container.to_json_dict()
+        actual = Serializer.to_json_dict(self._container)
 
         assert type(actual[Container.CONTAINER_FIELD_NAME]) is list
 
@@ -214,7 +215,7 @@ class DictSerialization(unittest.TestCase):
 
     def test_tuple_with_float(self):
         self._container.container = (1.123, 2.123, 3.1337)
-        actual = self._container.to_json_dict()
+        actual = Serializer.to_json_dict(self._container)
 
         assert type(actual[Container.CONTAINER_FIELD_NAME]) is list
 
@@ -223,24 +224,24 @@ class DictSerialization(unittest.TestCase):
 
     def test_tuple_with_json_object(self):
         self._container.container = (Container(), Container(), Container())
-        actual = self._container.to_json_dict()
+        actual = Serializer.to_json_dict(self._container)
 
         assert type(actual[Container.CONTAINER_FIELD_NAME]) is list
 
-        expected = [item.to_json_dict() for item in self._container.container]
+        expected = [Serializer.to_json_dict(item) for item in self._container.container]
         self.assertListEqual(expected, actual[Container.CONTAINER_FIELD_NAME])
 
     def test_tuple_with_json_object_without_fields(self):
         self._container.container = (JsonObjectWithoutFields(), JsonObjectWithoutFields(), JsonObjectWithoutFields())
 
         with self.assertRaises(ConfigurationError):
-            self._container.to_json_dict()
+            Serializer.to_json_dict(self._container)
 
     def test_tuple_with_not_serializable_object(self):
         self._container.container = (NotSerializableObject(), NotSerializableObject())
 
         with self.assertRaises(TypeError):
-            self._container.to_json_dict()
+            Serializer.to_json_dict(self._container)
 
     def test_tuple_with_list(self):
         self._container.container = (
@@ -248,7 +249,7 @@ class DictSerialization(unittest.TestCase):
             [1, 2, 3, 4],
             ["some string", "another string", "and yet another string"]
         )
-        actual = self._container.to_json_dict()
+        actual = Serializer.to_json_dict(self._container)
 
         assert type(actual[Container.CONTAINER_FIELD_NAME]) is list
 
@@ -261,7 +262,7 @@ class DictSerialization(unittest.TestCase):
             tuple([1, 2, 3, 4]),
             tuple(["some string", "another string"])
         )
-        actual = self._container.to_json_dict()
+        actual = Serializer.to_json_dict(self._container)
 
         assert type(actual[Container.CONTAINER_FIELD_NAME]) is list
 
@@ -275,7 +276,7 @@ class DictSerialization(unittest.TestCase):
             {Container(), Container(), Container()},
             {"some string", "another string"}
         )
-        actual = self._container.to_json_dict()
+        actual = Serializer.to_json_dict(self._container)
 
         assert type(actual[Container.CONTAINER_FIELD_NAME]) is list
 
@@ -283,7 +284,7 @@ class DictSerialization(unittest.TestCase):
         for lst in expected:
             for i, item in enumerate(lst):
                 if type(item) is Container:
-                    lst[i] = lst[i].to_json_dict()
+                    lst[i] = Serializer.to_json_dict(lst[i])
 
         self.assertListEqual(expected, actual[Container.CONTAINER_FIELD_NAME])
 
@@ -293,7 +294,7 @@ class DictSerialization(unittest.TestCase):
             {"key1": "some string", "key2": "another string"},
             {"key1": 1, "key2": 2, "key3": 3}
         )
-        actual = self._container.to_json_dict()
+        actual = Serializer.to_json_dict(self._container)
 
         assert type(actual[Container.CONTAINER_FIELD_NAME]) is list
 
@@ -302,7 +303,7 @@ class DictSerialization(unittest.TestCase):
 
     def test_empty_set(self):
         self._container.container = set([])
-        actual = self._container.to_json_dict()
+        actual = Serializer.to_json_dict(self._container)
 
         assert type(actual[Container.CONTAINER_FIELD_NAME]) is list
 
@@ -311,7 +312,7 @@ class DictSerialization(unittest.TestCase):
 
     def test_set_with_none(self):
         self._container.container = {None, None, None}
-        actual = self._container.to_json_dict()
+        actual = Serializer.to_json_dict(self._container)
 
         assert type(actual[Container.CONTAINER_FIELD_NAME]) is list
 
@@ -320,7 +321,7 @@ class DictSerialization(unittest.TestCase):
 
     def test_set_with_str(self):
         self._container.container = {"some string", "string", "another string", "ayyyyyy"}
-        actual = self._container.to_json_dict()
+        actual = Serializer.to_json_dict(self._container)
 
         assert type(actual[Container.CONTAINER_FIELD_NAME]) is list
 
@@ -329,7 +330,7 @@ class DictSerialization(unittest.TestCase):
 
     def test_set_with_int(self):
         self._container.container = {1, 2, 3, 4, 5, 6}
-        actual = self._container.to_json_dict()
+        actual = Serializer.to_json_dict(self._container)
 
         assert type(actual[Container.CONTAINER_FIELD_NAME]) is list
 
@@ -338,7 +339,7 @@ class DictSerialization(unittest.TestCase):
 
     def test_set_with_float(self):
         self._container.container = {1.1, 2.1337, 3.42, 12.9999}
-        actual = self._container.to_json_dict()
+        actual = Serializer.to_json_dict(self._container)
 
         assert type(actual[Container.CONTAINER_FIELD_NAME]) is list
 
@@ -347,24 +348,24 @@ class DictSerialization(unittest.TestCase):
 
     def test_set_with_json_object(self):
         self._container.container = {Container(), Container(), Container()}
-        actual = self._container.to_json_dict()
+        actual = Serializer.to_json_dict(self._container)
 
         assert type(actual[Container.CONTAINER_FIELD_NAME]) is list
 
-        expected = [item.to_json_dict() for item in self._container.container]
+        expected = [Serializer.to_json_dict(item) for item in self._container.container]
         self.assertListEqual(expected, actual[Container.CONTAINER_FIELD_NAME])
 
     def test_set_with_json_object_without_fields(self):
         self._container.container = {JsonObjectWithoutFields(), JsonObjectWithoutFields()}
 
         with self.assertRaises(ConfigurationError):
-            self._container.to_json_dict()
+            Serializer.to_json_dict(self._container)
 
     def test_set_with_not_serializable_object(self):
         self._container.container = {NotSerializableObject()}
 
         with self.assertRaises(TypeError):
-            self._container.to_json_dict()
+            Serializer.to_json_dict(self._container)
 
     def test_set_with_tuple(self):
         self._container.container = {
@@ -372,7 +373,7 @@ class DictSerialization(unittest.TestCase):
             (1, 2, 3),
             ("a string", "str", "some string", "another string")
         }
-        actual = self._container.to_json_dict()
+        actual = Serializer.to_json_dict(self._container)
 
         assert type(actual[Container.CONTAINER_FIELD_NAME]) is list
 
@@ -381,7 +382,7 @@ class DictSerialization(unittest.TestCase):
 
     def test_empty_dict(self):
         self._container.container = {}
-        actual = self._container.to_json_dict()
+        actual = Serializer.to_json_dict(self._container)
 
         assert type(actual[Container.CONTAINER_FIELD_NAME]) is dict
         self.assertDictEqual(self._container.container, actual[Container.CONTAINER_FIELD_NAME])
@@ -391,7 +392,7 @@ class DictSerialization(unittest.TestCase):
             "key1": None,
             "key2": None
         }
-        actual = self._container.to_json_dict()
+        actual = Serializer.to_json_dict(self._container)
 
         assert type(actual[Container.CONTAINER_FIELD_NAME]) is dict
         self.assertDictEqual(self._container.container, actual[Container.CONTAINER_FIELD_NAME])
@@ -401,7 +402,7 @@ class DictSerialization(unittest.TestCase):
             "key1": "some string",
             "key2": "another string"
         }
-        actual = self._container.to_json_dict()
+        actual = Serializer.to_json_dict(self._container)
 
         assert type(actual[Container.CONTAINER_FIELD_NAME]) is dict
         self.assertDictEqual(self._container.container, actual[Container.CONTAINER_FIELD_NAME])
@@ -411,7 +412,7 @@ class DictSerialization(unittest.TestCase):
             "key1": 1,
             "key2": 2,
         }
-        actual = self._container.to_json_dict()
+        actual = Serializer.to_json_dict(self._container)
 
         assert type(actual[Container.CONTAINER_FIELD_NAME]) is dict
         self.assertDictEqual(self._container.container, actual[Container.CONTAINER_FIELD_NAME])
@@ -421,7 +422,7 @@ class DictSerialization(unittest.TestCase):
             "key1": 1.1337,
             "key2": 42.4444
         }
-        actual = self._container.to_json_dict()
+        actual = Serializer.to_json_dict(self._container)
 
         assert type(actual[Container.CONTAINER_FIELD_NAME]) is dict
         self.assertDictEqual(self._container.container, actual[Container.CONTAINER_FIELD_NAME])
@@ -431,11 +432,13 @@ class DictSerialization(unittest.TestCase):
             "key1": Container(),
             "key2": Container()
         }
-        actual = self._container.to_json_dict()
+        actual = Serializer.to_json_dict(self._container)
 
         assert type(actual[Container.CONTAINER_FIELD_NAME]) is dict
 
-        expected = {key: self._container.container[key].to_json_dict() for key in self._container.container.keys()}
+        expected = {
+            key: Serializer.to_json_dict(self._container.container[key]) for key in self._container.container.keys()
+        }
         self.assertDictEqual(expected, actual[Container.CONTAINER_FIELD_NAME])
 
     def test_dict_with_json_object_without_fields(self):
@@ -445,7 +448,7 @@ class DictSerialization(unittest.TestCase):
         }
 
         with self.assertRaises(ConfigurationError):
-            self._container.to_json_dict()
+            Serializer.to_json_dict(self._container)
 
     def test_dict_with_not_serializable_object(self):
         self._container.container = {
@@ -454,14 +457,14 @@ class DictSerialization(unittest.TestCase):
         }
 
         with self.assertRaises(TypeError):
-            self._container.to_json_dict()
+            Serializer.to_json_dict(self._container)
 
     def test_dict_with_list(self):
         self._container.container = {
             "key1": [],
             "key2": ["some string", "another string"]
         }
-        actual = self._container.to_json_dict()
+        actual = Serializer.to_json_dict(self._container)
 
         assert type(actual[Container.CONTAINER_FIELD_NAME]) is dict
         self.assertDictEqual(self._container.container, actual[Container.CONTAINER_FIELD_NAME])
@@ -472,7 +475,7 @@ class DictSerialization(unittest.TestCase):
             "key2": (1, 2, 3),
             "key3": ("s", "i", "p")
         }
-        actual = self._container.to_json_dict()
+        actual = Serializer.to_json_dict(self._container)
 
         assert type(actual[Container.CONTAINER_FIELD_NAME]) is dict
 
@@ -484,7 +487,7 @@ class DictSerialization(unittest.TestCase):
             "key1": set([]),
             "key2": {1.1337, 42.0}
         }
-        actual = self._container.to_json_dict()
+        actual = Serializer.to_json_dict(self._container)
 
         assert type(actual[Container.CONTAINER_FIELD_NAME]) is dict
 
@@ -501,14 +504,14 @@ class DictSerialization(unittest.TestCase):
                 "key2": 2
             }
         }
-        actual = self._container.to_json_dict()
+        actual = Serializer.to_json_dict(self._container)
 
         assert type(actual[Container.CONTAINER_FIELD_NAME]) is dict
         self.assertDictEqual(self._container.container, actual[Container.CONTAINER_FIELD_NAME])
 
     def test_inheritance(self):
         self._container.container = ExtendedCar()
-        actual = self._container.to_json_dict()
+        actual = Serializer.to_json_dict(self._container)
 
         assert type(actual[Container.CONTAINER_FIELD_NAME]) is dict
         self.assertIn(ExtendedCar.FIELD_MAX_SPEED_NAME, actual[Container.CONTAINER_FIELD_NAME].keys())
@@ -523,7 +526,7 @@ class DictSerializationWithTimes(unittest.TestCase):
     def test_date(self):
         date = datetime.date.today()
         self._container.container = date
-        actual = self._container.to_json_dict()
+        actual = Serializer.to_json_dict(self._container)
 
         expected = date.strftime(DATE_FORMAT)
         self.assertEqual(expected, actual[Container.CONTAINER_FIELD_NAME])
@@ -531,7 +534,7 @@ class DictSerializationWithTimes(unittest.TestCase):
     def test_with_naive_datetime(self):
         dt = datetime.datetime.now()
         self._container.container = dt
-        actual = self._container.to_json_dict()
+        actual = Serializer.to_json_dict(self._container)
 
         expected = dt.strftime(DATETIME_FORMAT)
         self.assertEqual(expected, actual[Container.CONTAINER_FIELD_NAME])
@@ -557,7 +560,7 @@ class DictSerializationWithTimes(unittest.TestCase):
     def _datetime_timezone_helper(self, timezone_name, utc_offset):
         dt = datetime.datetime.now(tz.gettz(timezone_name))
         self._container.container = dt
-        actual = self._container.to_json_dict()
+        actual = Serializer.to_json_dict(self._container)
 
         expected = dt.strftime(DATETIME_TZ_FORMAT)
         self.assertEqual(expected, actual[Container.CONTAINER_FIELD_NAME])
@@ -565,7 +568,7 @@ class DictSerializationWithTimes(unittest.TestCase):
 
     def test_list_with_date(self):
         self._container.container = [datetime.date.today(), datetime.date.today() - datetime.timedelta(1)]
-        actual = self._container.to_json_dict()
+        actual = Serializer.to_json_dict(self._container)
 
         assert type(actual[Container.CONTAINER_FIELD_NAME]) is list
 
@@ -574,7 +577,7 @@ class DictSerializationWithTimes(unittest.TestCase):
 
     def test_list_with_naive_datetime(self):
         self._container.container = [datetime.datetime.now(), datetime.datetime.now() - datetime.timedelta(1)]
-        actual = self._container.to_json_dict()
+        actual = Serializer.to_json_dict(self._container)
 
         assert type(actual[Container.CONTAINER_FIELD_NAME]) is list
 
@@ -609,7 +612,7 @@ class DictSerializationWithTimes(unittest.TestCase):
 
     def test_tuple_with_date(self):
         self._container.container = (datetime.date.today(), datetime.date.today() - datetime.timedelta(1))
-        actual = self._container.to_json_dict()
+        actual = Serializer.to_json_dict(self._container)
 
         assert type(actual[Container.CONTAINER_FIELD_NAME]) is list
 
@@ -618,7 +621,7 @@ class DictSerializationWithTimes(unittest.TestCase):
 
     def test_tuple_with_naive_datetime(self):
         self._container.container = [datetime.datetime.now(), datetime.datetime.now() - datetime.timedelta(hours=3)]
-        actual = self._container.to_json_dict()
+        actual = Serializer.to_json_dict(self._container)
 
         assert type(actual[Container.CONTAINER_FIELD_NAME]) is list
 
@@ -653,7 +656,7 @@ class DictSerializationWithTimes(unittest.TestCase):
 
     def test_set_with_date(self):
         self._container.container = {datetime.date.today()}
-        actual = self._container.to_json_dict()
+        actual = Serializer.to_json_dict(self._container)
 
         assert type(actual[Container.CONTAINER_FIELD_NAME]) is list
 
@@ -666,7 +669,7 @@ class DictSerializationWithTimes(unittest.TestCase):
             datetime.datetime.now() - datetime.timedelta(1),
             datetime.datetime.now() - datetime.timedelta(hours=1)
         }
-        actual = self._container.to_json_dict()
+        actual = Serializer.to_json_dict(self._container)
 
         assert type(actual[Container.CONTAINER_FIELD_NAME]) is list
 
@@ -705,7 +708,7 @@ class DictSerializationWithTimes(unittest.TestCase):
             "key2": datetime.date.today() - datetime.timedelta(7),
             "key3": datetime.date.today() - datetime.timedelta(39)
         }
-        actual = self._container.to_json_dict()
+        actual = Serializer.to_json_dict(self._container)
 
         assert type(actual[Container.CONTAINER_FIELD_NAME]) is dict
 
@@ -718,7 +721,7 @@ class DictSerializationWithTimes(unittest.TestCase):
         self._container.container = {
             "key1": datetime.datetime.now() - datetime.timedelta(12)
         }
-        actual = self._container.to_json_dict()
+        actual = Serializer.to_json_dict(self._container)
 
         assert type(actual[Container.CONTAINER_FIELD_NAME]) is dict
 
@@ -751,7 +754,7 @@ class DictSerializationWithTimes(unittest.TestCase):
             "key2": datetime.datetime.now(tz.gettz(timezone_name)),
             "key3": datetime.datetime.now(tz.gettz(timezone_name)) + datetime.timedelta(minutes=1)
         }
-        actual = self._container.to_json_dict()
+        actual = Serializer.to_json_dict(self._container)
 
         assert type(actual[Container.CONTAINER_FIELD_NAME]) is dict
 
@@ -763,7 +766,7 @@ class DictSerializationWithTimes(unittest.TestCase):
             assert actual[Container.CONTAINER_FIELD_NAME][key].endswith(utc_offset)
 
     def _datetime_timezone_iterable_helper(self, utc_offset):
-        actual = self._container.to_json_dict()
+        actual = Serializer.to_json_dict(self._container)
 
         assert type(actual[Container.CONTAINER_FIELD_NAME]) is list
 
@@ -780,7 +783,7 @@ class DictSerializationWithNotNullable(unittest.TestCase):
         json_object.not_nullable = None
 
         with self.assertRaises(FieldValidationError):
-            json_object.to_json_dict()
+            Serializer.to_json_dict(json_object)
 
     def test_referenced_json_object_with_not_nullable_field_which_is_null(self):
         container = Container()
@@ -788,7 +791,7 @@ class DictSerializationWithNotNullable(unittest.TestCase):
         container.container.not_nullable = None
 
         with self.assertRaises(FieldValidationError):
-            container.to_json_dict()
+            Serializer.to_json_dict(container)
 
     def test_list_with_json_object_with_not_nullable_field_which_is_null(self):
         json_object = JsonObjectWithNotNullableField()
@@ -798,7 +801,7 @@ class DictSerializationWithNotNullable(unittest.TestCase):
         container.container = [json_object]
 
         with self.assertRaises(FieldValidationError):
-            container.to_json_dict()
+            Serializer.to_json_dict(container)
 
     def test_tuple_with_json_object_with_not_nullable_field_which_is_null(self):
         json_object = JsonObjectWithNotNullableField()
@@ -808,7 +811,7 @@ class DictSerializationWithNotNullable(unittest.TestCase):
         container.container = (json_object,)
 
         with self.assertRaises(FieldValidationError):
-            container.to_json_dict()
+            Serializer.to_json_dict(container)
 
     def test_set_with_json_object_with_not_nullable_field_which_is_null(self):
         json_object = JsonObjectWithNotNullableField()
@@ -818,7 +821,7 @@ class DictSerializationWithNotNullable(unittest.TestCase):
         container.container = {json_object,}
 
         with self.assertRaises(FieldValidationError):
-            container.to_json_dict()
+            Serializer.to_json_dict(container)
 
     def test_dict_with_json_object_with_not_nullable_field_which_is_null(self):
         json_object = JsonObjectWithNotNullableField()
@@ -830,4 +833,4 @@ class DictSerializationWithNotNullable(unittest.TestCase):
         }
 
         with self.assertRaises(FieldValidationError):
-            container.to_json_dict()
+            Serializer.to_json_dict(container)

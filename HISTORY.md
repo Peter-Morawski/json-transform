@@ -1,13 +1,18 @@
 # History
 
+## 0.1.9 (2018-08-21)
+
+* removed the serialization and deserialization logic from the JsonObject and created separate objects for serializing and
+deserializing
+
 ## 0.1.8 (2018-08-19)
 
-* added the **nullable** parameter to the `field` decorator which indicates that a field is nullable during
+* added the **nullable** parameter to the `field()` decorator which indicates that a field is nullable during
 serialization and deserialization
 
 ## 0.1.7 (2018-08-16)
 
-* added the **required** parameter to the `field` decorator which indicates that a field is required during the
+* added the **required** parameter to the `field()` decorator which indicates that a field is required during the
 deserialization
 * fixed the deserialization of a dict which doesnt have an appropriate JsonObject so that all it's values are reversed
 from the normalization process
@@ -25,5 +30,5 @@ from the normalization process
 
 * first release of the package
 * possibility to serialize and deserialize python objects by inheriting from **JsonObject** and annotating property
-getters with the **field()** decorator
-* add custom name to fields by passing a string into the **field()** decorator
+getters with the `field()` decorator
+* add custom name to fields by passing a string into the `field()` decorator

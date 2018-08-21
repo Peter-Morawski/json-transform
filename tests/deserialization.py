@@ -2,61 +2,77 @@
 
 import unittest
 import datetime
-from jsontransform import ConfigurationError, FieldValidationError
+from jsontransform import ConfigurationError, FieldValidationError, MissingObjectError, Deserializer
 from .datastructure import ExtendedCar, Car, Container, JsonObjectWithoutFields, JsonObjectWithRequiredField, \
     JsonObjectWithNotNullableField
 from .common import get_new_york_utc_offset, get_new_york_utc_offset_as_int
 
 
 class DictDeserialization(unittest.TestCase):
+    def test_not_found_json_object(self):
+        with self.assertRaises(MissingObjectError):
+            Deserializer.from_json_dict({"some_unknown_field": "some value"})
+
+    def test_automatic_target_object_recognition_1(self):
+        actual = Deserializer.from_json_dict({Container.CONTAINER_FIELD_NAME: "some value"})
+
+        assert type(actual) is Container
+
+    def test_automatic_target_object_recognition_2(self):
+        actual = Deserializer.from_json_dict({
+            JsonObjectWithRequiredField.REQUIRED_FIELD_NAME: "value",
+            JsonObjectWithRequiredField.SOME_FIELD_NAME: 42
+        })
+
+        assert type(actual) is JsonObjectWithRequiredField
+
+    def test_automatic_target_object_recognition_3(self):
+        actual = Deserializer.from_json_dict({
+            JsonObjectWithRequiredField.REQUIRED_FIELD_NAME: "value"
+        })
+
+        assert type(actual) is JsonObjectWithRequiredField
+
     def test_if_dict_is_casted_into_json_object(self):
         d = {
             Container.CONTAINER_FIELD_NAME: "some value"
         }
-        actual = Container.from_json_dict(d)
+        actual = Deserializer.from_json_dict(d, Container)
         assert type(actual) is Container
-
-    def test_empty_dict(self):
-        with self.assertRaises(TypeError):
-            Container.from_json_dict({})
-
-    def test_none_instead_of_dict(self):
-        with self.assertRaises(TypeError):
-            Container.from_json_dict(None)
 
     def test_empty_dict_as_value(self):
         d = {
             Container.CONTAINER_FIELD_NAME: {}
         }
-        actual = Container.from_json_dict(d)
+        actual = Deserializer.from_json_dict(d, Container)
         self.assertEqual(d[Container.CONTAINER_FIELD_NAME], actual.container)
 
     def test_none(self):
         d = {
             Container.CONTAINER_FIELD_NAME: None
         }
-        actual = Container.from_json_dict(d)
+        actual = Deserializer.from_json_dict(d, Container)
         self.assertEqual(d[Container.CONTAINER_FIELD_NAME], actual.container)
 
     def test_str(self):
         d = {
             Container.CONTAINER_FIELD_NAME: "some string"
         }
-        actual = Container.from_json_dict(d)
+        actual = Deserializer.from_json_dict(d, Container)
         self.assertEqual(d[Container.CONTAINER_FIELD_NAME], actual.container)
 
     def test_int(self):
         d = {
             Container.CONTAINER_FIELD_NAME: 42
         }
-        actual = Container.from_json_dict(d)
+        actual = Deserializer.from_json_dict(d, Container)
         self.assertEqual(d[Container.CONTAINER_FIELD_NAME], actual.container)
 
     def test_float(self):
         d = {
             Container.CONTAINER_FIELD_NAME: 42.1337
         }
-        actual = Container.from_json_dict(d)
+        actual = Deserializer.from_json_dict(d, Container)
         self.assertEqual(d[Container.CONTAINER_FIELD_NAME], actual.container)
 
     def test_json_object(self):
@@ -65,7 +81,7 @@ class DictDeserialization(unittest.TestCase):
                 Container.CONTAINER_FIELD_NAME: "some string"
             }
         }
-        actual = Container.from_json_dict(d)
+        actual = Deserializer.from_json_dict(d, Container)
         assert type(actual.container) is Container
 
     def test_json_object_without_fields(self):
@@ -74,7 +90,7 @@ class DictDeserialization(unittest.TestCase):
         }
 
         with self.assertRaises(ConfigurationError):
-            JsonObjectWithoutFields.from_json_dict(d)
+            Deserializer.from_json_dict(d, JsonObjectWithoutFields)
 
     def test_wrong_json_object(self):
         d = {
@@ -82,7 +98,7 @@ class DictDeserialization(unittest.TestCase):
         }
 
         with self.assertRaises(TypeError):
-            ExtendedCar.from_json_dict(d)
+            Deserializer.from_json_dict(d, ExtendedCar)
 
     def test_not_deserializable_object(self):
         d = {
@@ -90,48 +106,48 @@ class DictDeserialization(unittest.TestCase):
         }
 
         with self.assertRaises(TypeError):
-            Container.from_json_dict(d)
+            Deserializer.from_json_dict(d, Container)
 
     def test_empty_list(self):
         d = {
             Container.CONTAINER_FIELD_NAME: []
         }
-        actual = Container.from_json_dict(d)
+        actual = Deserializer.from_json_dict(d, Container)
         self.assertEqual(d[Container.CONTAINER_FIELD_NAME], actual.container)
 
     def test_list_with_none(self):
         d = {
             Container.CONTAINER_FIELD_NAME: [None, None, None]
         }
-        actual = Container.from_json_dict(d)
+        actual = Deserializer.from_json_dict(d, Container)
         self.assertEqual(d[Container.CONTAINER_FIELD_NAME], actual.container)
 
     def test_list_with_empty_dict(self):
         d = {
             Container.CONTAINER_FIELD_NAME: [{}]
         }
-        actual = Container.from_json_dict(d)
+        actual = Deserializer.from_json_dict(d, Container)
         self.assertEqual(d[Container.CONTAINER_FIELD_NAME], actual.container)
 
     def test_list_with_str(self):
         d = {
             Container.CONTAINER_FIELD_NAME: ["some string", "another string", "aaaaaa strriiiiinggg"]
         }
-        actual = Container.from_json_dict(d)
+        actual = Deserializer.from_json_dict(d, Container)
         self.assertEqual(d[Container.CONTAINER_FIELD_NAME], actual.container)
 
     def test_list_with_int(self):
         d = {
             Container.CONTAINER_FIELD_NAME: [1, 2, 3, 4, 5, 6]
         }
-        actual = Container.from_json_dict(d)
+        actual = Deserializer.from_json_dict(d, Container)
         self.assertEqual(d[Container.CONTAINER_FIELD_NAME], actual.container)
 
     def test_list_with_float(self):
         d = {
             Container.CONTAINER_FIELD_NAME: [1.123, 2.234, 3.345, 4.456]
         }
-        actual = Container.from_json_dict(d)
+        actual = Deserializer.from_json_dict(d, Container)
         self.assertEqual(d[Container.CONTAINER_FIELD_NAME], actual.container)
 
     def test_list_with_json_object(self):
@@ -145,11 +161,11 @@ class DictDeserialization(unittest.TestCase):
                 }
             ]
         }
-        actual = Container.from_json_dict(d)
+        actual = Deserializer.from_json_dict(d, Container)
 
         assert all(type(item) is Container for item in actual.container)
 
-        expected = [Container.from_json_dict(item) for item in d[Container.CONTAINER_FIELD_NAME]]
+        expected = [Deserializer.from_json_dict(item, Container) for item in d[Container.CONTAINER_FIELD_NAME]]
         for item in expected:
             assert any(item.container == actual_item.container for actual_item in actual.container)
 
@@ -159,20 +175,20 @@ class DictDeserialization(unittest.TestCase):
         }
 
         with self.assertRaises(TypeError):
-            Container.from_json_dict(d)
+            Deserializer.from_json_dict(d, Container)
 
     def test_list_with_list(self):
         d = {
             Container.CONTAINER_FIELD_NAME: [[], [1, 2, 3], ["some string", "another string"]]
         }
-        actual = Container.from_json_dict(d)
+        actual = Deserializer.from_json_dict(d, Container)
         self.assertEqual(d[Container.CONTAINER_FIELD_NAME], actual.container)
 
     def test_list_with_dict(self):
         d = {
             Container.CONTAINER_FIELD_NAME: [{"key1": "some value", "key2": 1}, {"key1": 42}]
         }
-        actual = Container.from_json_dict(d)
+        actual = Deserializer.from_json_dict(d, Container)
         self.assertListEqual(d[Container.CONTAINER_FIELD_NAME], actual.container)
 
     def test_super_class_of_json_object(self):
@@ -181,7 +197,7 @@ class DictDeserialization(unittest.TestCase):
             ExtendedCar.FIELD_MAX_SPEED_NAME: 130,
             ExtendedCar.FIELD_HORSEPOWER_NAME: 30
         }
-        actual = Car.from_json_dict(d)
+        actual = Deserializer.from_json_dict(d, Car)
 
         assert type(actual) is Car
         self.assertEqual(d[Car.FIELD_MODEL_NAME_NAME], actual.model_name)
@@ -195,7 +211,7 @@ class DictDeserialization(unittest.TestCase):
                 }
             }
         }
-        actual = Container.from_json_dict(d)
+        actual = Deserializer.from_json_dict(d, Container)
 
         assert type(actual.container) is dict
         assert type(actual.container["key1"]) is Container
@@ -209,7 +225,7 @@ class DictDeserializationTimes(unittest.TestCase):
         d = {
             Container.CONTAINER_FIELD_NAME: self.DATE
         }
-        actual = Container.from_json_dict(d)
+        actual = Deserializer.from_json_dict(d, Container)
 
         assert type(actual) is Container
         assert type(actual.container) is datetime.date
@@ -226,7 +242,7 @@ class DictDeserializationTimes(unittest.TestCase):
         d = {
             Container.CONTAINER_FIELD_NAME: "{}T{}Z".format(self.DATE, self.TIME)
         }
-        actual = Container.from_json_dict(d)
+        actual = Deserializer.from_json_dict(d, Container)
 
         assert type(actual) is Container
         assert type(actual.container) is datetime.datetime
@@ -261,7 +277,7 @@ class DictDeserializationTimes(unittest.TestCase):
         d = {
             Container.CONTAINER_FIELD_NAME: "{}T{}{}".format(self.DATE, self.TIME, utc_offset)
         }
-        actual = Container.from_json_dict(d)
+        actual = Deserializer.from_json_dict(d, Container)
 
         assert type(actual.container) is datetime.datetime
         self._assert_datetime_equal(actual.container)
@@ -282,7 +298,7 @@ class DictDeserializationTimes(unittest.TestCase):
         d = {
             Container.CONTAINER_FIELD_NAME: "{}{}Z".format(self.DATE, self.TIME)
         }
-        actual = Container.from_json_dict(d)
+        actual = Deserializer.from_json_dict(d, Container)
 
         assert type(actual.container) is str
 
@@ -290,7 +306,7 @@ class DictDeserializationTimes(unittest.TestCase):
         d = {
             Container.CONTAINER_FIELD_NAME: "{}T{}".format(self.DATE, self.TIME)
         }
-        actual = Container.from_json_dict(d)
+        actual = Deserializer.from_json_dict(d, Container)
 
         assert type(actual.container) is str
 
@@ -298,7 +314,7 @@ class DictDeserializationTimes(unittest.TestCase):
         d = {
             Container.CONTAINER_FIELD_NAME: "{}T{}0000".format(self.DATE, self.TIME)
         }
-        actual = Container.from_json_dict(d)
+        actual = Deserializer.from_json_dict(d, Container)
 
         assert type(actual.container) is str
 
@@ -306,7 +322,7 @@ class DictDeserializationTimes(unittest.TestCase):
         d = {
             Container.CONTAINER_FIELD_NAME: [self.DATE]
         }
-        actual = Container.from_json_dict(d)
+        actual = Deserializer.from_json_dict(d, Container)
 
         assert len(actual.container) == 1
         assert type(actual.container[0]) is datetime.date
@@ -317,7 +333,7 @@ class DictDeserializationTimes(unittest.TestCase):
         d = {
             Container.CONTAINER_FIELD_NAME: ["{}T{}Z".format(self.DATE, self.TIME)]
         }
-        actual = Container.from_json_dict(d)
+        actual = Deserializer.from_json_dict(d, Container)
 
         assert len(actual.container) == 1
         assert type(actual.container[0]) is datetime.datetime
@@ -345,7 +361,7 @@ class DictDeserializationTimes(unittest.TestCase):
         d = {
             Container.CONTAINER_FIELD_NAME: ["{}T{}{}".format(self.DATE, self.TIME, utc_offset)]
         }
-        actual = Container.from_json_dict(d)
+        actual = Deserializer.from_json_dict(d, Container)
 
         assert len(actual.container) == 1
         assert type(actual.container[0]) is datetime.datetime
@@ -358,7 +374,7 @@ class DictDeserializationTimes(unittest.TestCase):
         d = {
             Container.CONTAINER_FIELD_NAME: ["{}{}Z".format(self.DATE, self.TIME)]
         }
-        actual = Container.from_json_dict(d)
+        actual = Deserializer.from_json_dict(d, Container)
 
         assert len(actual.container) == 1
         assert type(actual.container[0]) is str
@@ -367,7 +383,7 @@ class DictDeserializationTimes(unittest.TestCase):
         d = {
             Container.CONTAINER_FIELD_NAME: ["{}T{}".format(self.DATE, self.TIME)]
         }
-        actual = Container.from_json_dict(d)
+        actual = Deserializer.from_json_dict(d, Container)
 
         assert len(actual.container) == 1
         assert type(actual.container[0]) is str
@@ -376,7 +392,7 @@ class DictDeserializationTimes(unittest.TestCase):
         d = {
             Container.CONTAINER_FIELD_NAME: ["{}T{}{}".format(self.DATE, self.TIME, "0000")]
         }
-        actual = Container.from_json_dict(d)
+        actual = Deserializer.from_json_dict(d, Container)
 
         assert len(actual.container) == 1
         assert type(actual.container[0]) is str
@@ -389,14 +405,14 @@ class DictDeserializationWithRequiredField(unittest.TestCase):
         }
 
         with self.assertRaises(FieldValidationError):
-            JsonObjectWithRequiredField.from_json_dict(d)
+            Deserializer.from_json_dict(d, JsonObjectWithRequiredField)
 
     def test_satisfied_required_field(self):
         d = {
             JsonObjectWithRequiredField.SOME_FIELD_NAME: "some string",
             JsonObjectWithRequiredField.REQUIRED_FIELD_NAME: "another string"
         }
-        actual = JsonObjectWithRequiredField.from_json_dict(d)
+        actual = Deserializer.from_json_dict(d, JsonObjectWithRequiredField)
 
         self.assertEqual(d[JsonObjectWithRequiredField.REQUIRED_FIELD_NAME], actual.required_field)
 
@@ -408,7 +424,7 @@ class DictDeserializationWithRequiredField(unittest.TestCase):
         }
 
         with self.assertRaises(FieldValidationError):
-            Container.from_json_dict(d)
+            Deserializer.from_json_dict(d, Container)
 
     def test_list_with_json_object_with_missing_required_field(self):
         d = {
@@ -420,7 +436,7 @@ class DictDeserializationWithRequiredField(unittest.TestCase):
         }
 
         with self.assertRaises(FieldValidationError):
-            Container.from_json_dict(d)
+            Deserializer.from_json_dict(d, Container)
 
     def test_list_with_json_object_with_satisfied_required_field(self):
         d = {
@@ -430,7 +446,7 @@ class DictDeserializationWithRequiredField(unittest.TestCase):
                 }
             ]
         }
-        actual = Container.from_json_dict(d)
+        actual = Deserializer.from_json_dict(d, Container)
 
         self.assertEqual(
             d[Container.CONTAINER_FIELD_NAME][0][JsonObjectWithRequiredField.REQUIRED_FIELD_NAME],
@@ -447,7 +463,7 @@ class DictDeserializationWithRequiredField(unittest.TestCase):
         }
 
         with self.assertRaises(FieldValidationError):
-            Container.from_json_dict(d)
+            Deserializer.from_json_dict(d, Container)
 
     def test_dict_with_json_object_with_satisfied_required_field(self):
         d = {
@@ -457,7 +473,7 @@ class DictDeserializationWithRequiredField(unittest.TestCase):
                 }
             }
         }
-        actual = Container.from_json_dict(d)
+        actual = Deserializer.from_json_dict(d, Container)
 
         self.assertEqual(
             d[Container.CONTAINER_FIELD_NAME]["key1"][JsonObjectWithRequiredField.REQUIRED_FIELD_NAME],
@@ -472,7 +488,7 @@ class DictDeserializationWithNotNullable(unittest.TestCase):
         }
 
         with self.assertRaises(FieldValidationError):
-            JsonObjectWithNotNullableField.from_json_dict(d)
+            Deserializer.from_json_dict(d, JsonObjectWithNotNullableField)
 
     def test_referenced_json_object_with_not_nullable_field_which_is_null(self):
         d = {
@@ -482,7 +498,7 @@ class DictDeserializationWithNotNullable(unittest.TestCase):
         }
 
         with self.assertRaises(FieldValidationError):
-            Container.from_json_dict(d)
+            Deserializer.from_json_dict(d, Container)
 
     def test_list_with_json_object_with_not_nullable_field_which_is_null(self):
         d = {
@@ -494,7 +510,7 @@ class DictDeserializationWithNotNullable(unittest.TestCase):
         }
 
         with self.assertRaises(FieldValidationError):
-            Container.from_json_dict(d)
+            Deserializer.from_json_dict(d, Container)
 
     def test_dict_with_json_object_with_not_nullable_field_which_is_null(self):
         d = {
@@ -506,4 +522,4 @@ class DictDeserializationWithNotNullable(unittest.TestCase):
         }
 
         with self.assertRaises(FieldValidationError):
-            Container.from_json_dict(d)
+            Deserializer.from_json_dict(d, Container)

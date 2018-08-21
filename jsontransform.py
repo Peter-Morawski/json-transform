@@ -29,6 +29,10 @@ class FieldValidationError(Exception):
     pass
 
 
+class MissingObjectError(Exception):
+    pass
+
+
 @decorator
 def field(func, field_name=None, required=False, nullable=True, *args, **kwargs):
     """
@@ -77,121 +81,151 @@ def field(func, field_name=None, required=False, nullable=True, *args, **kwargs)
 class JsonObject(object):
     """
     A JsonObject is an object/class which is serializable into a JSON object and deserializable from a JSON object.
-    It can be serialized into and deserialized from a
+    """
+    pass
 
-    * JSON string
-    * JSON file
-    * python dict
+
+JSONObject = JsonObject
+
+
+class Serializer(object):
+    """
+    Provides functions to serialize a :class:`JsonObject` into:
+
+    * an `str`
+    * a file-like object
+    * a `dict`
     """
     @classmethod
-    def from_json_string(cls, json_string):
+    def to_json_string(cls, json_object):
         """
-        Deserialize a JSON string into an instance of this class.
+        Serialize a :class:`JsonObject` into an `str`.
 
-        EXAMPLE
-        =======
-        JSON string = "{\"name\": \"Peter\", \"age\": 6}"
-
-        class Person(JsonObject):
-            def __init__(self):
-                self._name = ""
-                self._age = 0
-
-            @property
-            @field()
-            def name(self):
-                return self._name
-
-            @name.setter
-            def name(self, value):
-                self._name = value
-
-            @property
-            @field()
-            def age(self):
-                return self._age
-
-            @age.setter
-            def age(self, value):
-                self._age = value
-
-        :param json_string: The string with the JSON object which should be deserialized into this object.
-        :raises ConfigurationError: When this class doesn't define any JSON fields.
-        :raises TypeError: When this class didn't contain any fields defined in the JSON file.
-        :raises FieldValidationError: When a field did not match the defined expectations e.g. a required field is
-        missing.
-        :return: An instance of this class.
-        """
-        if json_string is None:
-            raise TypeError("'NoneType' is not deserializable")
-
-        d = json.loads(json_string)
-        return cls.from_json_dict(d)
-
-    def to_json_string(self):
-        """
-        Serialize this object into a JSON string.
-
-        :raises ConfigurationError: When this class doesn't define any property getter annotated with the ``field()``
-        decorator.
-        :raises TypeError: When a field in this class couldn't be serialized.
-        :return: This object serialized as a JSON string.
-        """
-        return json.dumps(self.to_json_dict())
-
-    @classmethod
-    def from_json_file(cls, f):
-        """
-        Deserialize this class from a JSON file.
-
-        :param f: A ``.read()``-supporting file-like object containing a JSON object from which this class should be
-        deserialized.
-        :raises ConfigurationError: When this class doesn't define any JSON fields.
-        :raises TypeError: When this class didn't contain any fields defined in the JSON file.
-        :raises FieldValidationError: When a field did not match the defined expectations e.g. a required field is
-        missing.
-        :return: An instance of this class with the values of the JSON file.
-        """
-        if f is None:
-            raise TypeError("'NoneType' is not deserializable")
-
-        d = json.load(f)
-        return cls.from_json_dict(d)
-
-    def to_json_file(self, f):
-        """
-        Serialize this object into a file.
-
-        :param f: a ``.write()``-supporting file-like object.
-        :raises ConfigurationError: When this class doesn't define any property getter annotated with the ``field()``
-        decorator.
-        :raises TypeError: When a field in this class couldn't be serialized.
-        """
-        d = self.to_json_dict()
-        json.dump(d, f)
-
-    @classmethod
-    def from_json_dict(cls, json_dict):
-        """
-        Deserialize this class from a dict.
-
-        :param json_dict: The dict from which this class should be deserialized.
-        :raises ConfigurationError: When this class doesn't define any JSON fields.
-        :raises TypeError: When this class didn't contain any fields defined by the dict.
+        :param json_object: The `JsonObject` which should be serialized.
+        :return: A `str` which contains the serialized `JsonObject`.
+        :raises ConfigurationError: When the given `JsonObject` doesn't define any fields.
         :raises FieldValidationError: When a field constraint has been violated e.g. a required field is missing.
-        :return: An instance of this class with the values of the dict.
+        :raises TypeError: When a field in the given `JsonObject` couldn't be serialized.
         """
-        if json_dict is None:
-            raise TypeError("'NoneType' is not deserializable")
+        return json.dumps(cls.to_json_dict(json_object))
 
-        result = cls()
+    @classmethod
+    def to_json_file(cls, json_file, json_object):
+        """
+        Serialize a :class:`JsonObject` into a file.
+
+        :param json_file: A `write()`-supporting file-like object.
+        :param json_object: The `JsonObject` which should be serialized.
+        :raises ConfigurationError: When the given `JsonObject` doesn't define any fields.
+        :raises FieldValidationError: When a field constraint has been violated e.g. a required field is missing.
+        :raises TypeError: When a field in the given `JsonObject` couldn't be serialized.
+        """
+        json.dump(cls.to_json_dict(json_object), json_file)
+
+    @classmethod
+    def to_json_dict(cls, json_object):
+        """
+        Serialize a :class:`JsonObject` into a `dict`.
+
+        :param json_object: The `JsonObject` which should be serialized.
+        :return: A `dict` which represents the `JsonObject`.
+        :raises ConfigurationError: When the given `JsonObject` doesn't define any fields.
+        :raises FieldValidationError: When a field constraint has been violated e.g. a required field is missing.
+        :raises TypeError: When a field in the given `JsonObject` couldn't be serialized.
+        """
+        result = {}
+        properties = _JsonCommon.get_decorated_properties(json_object)
+        if not properties.keys():
+            raise ConfigurationError("The class doesn't define any fields which can be serialized into JSON")
+
+        _JsonValidation.validate_fields(json_object)
+
+        for key in properties.keys():
+            property_value = properties[key].fget(json_object)
+
+            if key:
+                result[key] = _JsonSerialization.get_normalized_value(property_value)
+
+        return result
+
+
+class Deserializer(object):
+    """
+    Provides function to deserialize a :class:`JsonObject` from:
+
+    * an `str`
+    * a file-like object
+    * a `dict`
+    """
+    @classmethod
+    def from_json_string(cls, json_string, target=None):
+        """
+        Deserialize a string into a :class:`JsonObject`.
+
+        :param json_string: The `str` from which the `JsonObject` should be deserialized.
+        :param target: The target `JsonObject` type into which the data from the json string should be deserialized. If
+        this is `None` then the object with the most matching fields will be searched.
+
+        :return: The corresponding `JsonObject`.
+        :raises ConfigurationError: When the target `JsonObject` doesnt define any fields.
+        :raises FieldValidationError: When a field constraint has been violated e.g. a required field is missing.
+        :raises TypeError: When the target `JsonObject` didn't have any matching field with the JSON object inside the
+        `str`.
+
+        :raises MissingObjectError: When no target `JsonObject` was specified and no matching `JsonObject` could be
+        found.
+        """
+        return cls.from_json_dict(json.loads(json_string), target)
+
+    @classmethod
+    def from_json_file(cls, json_file, target=None):
+        """
+        Deserialize a JSON file into a :class:`JsonObject`.
+
+        :param json_file: A `.read()`-supporting file-like object from which the `JsonObject` should be deserialized.
+        :param target: The target `JsonObject` type into which the data from the json string should be deserialized. If
+        this is `None` then the object with the most matching fields will be searched.
+
+        :return: The corresponding `JsonObject`.
+        :raises ConfigurationError: When the target `JsonObject` doesnt define any fields.
+        :raises FieldValidationError: When a field constraint has been violated e.g. a required field is missing.
+        :raises TypeError: When the target `JsonObject` didn't have any matching field with the JSON object inside the
+        file-like object.
+
+        :raises MissingObjectError: When no target `JsonObject` was specified and no matching `JsonObject` could be
+        found.
+        """
+        return cls.from_json_dict(json.load(json_file), target)
+
+    @classmethod
+    def from_json_dict(cls, json_dict, target=None):
+        """
+        Deserialize a `dict` into a :class:`JsonObject`.
+
+        :param json_dict: A `dict` from which the `JsonObject` should be deserialized.
+        :param target: The target `JsonObject` type into which the data from the json string should be deserialized. If
+        this is `None` then the object with the most matching fields will be searched.
+
+        :return: The corresponding `JsonObject`.
+        :raises ConfigurationError: When the target `JsonObject` doesnt define any fields.
+        :raises FieldValidationError: When a field constraint has been violated e.g. a required field is missing.
+        :raises TypeError: When the target `JsonObject` didn't have any matching field with the JSON object inside the
+        `dict`.
+
+        :raises MissingObjectError: When no target `JsonObject` was specified and no matching `JsonObject` could be
+        found.
+        """
+        if target is None:
+            target = _JsonDeserialization.get_most_matching_json_object(json_dict)
+
+        result = target()
         _JsonDeserialization.validate_if_required_fields_satisfied(result, json_dict)
 
         properties = _JsonCommon.get_decorated_properties(result)
         if not properties:
-            raise ConfigurationError("The class doesn't define any fields which can be serialized into JSON")
+            raise ConfigurationError("The class doesn't define any fields")
         if all(properties.get(key) is None for key in json_dict.keys()):
-            raise TypeError("No matching fields found to build this class")
+            raise TypeError("No matching fields found to build a JsonObject with the type `{}`".format(type(result)))
 
         for p in properties.keys():
             value = _JsonDeserialization.reverse_normalized_value(json_dict.get(p))
@@ -201,45 +235,17 @@ class JsonObject(object):
 
         return result
 
-    def to_json_dict(self):
-        """
-        Serialize this object into a `dict`.
-
-        :raises ConfigurationError: When this class doesn't define any property getter annotated with the ``field()`` decorator.
-        :raises TypeError: When a field in this class couldn't be serialized.
-        :raises FieldValidationError: When a field constraint has been violated e.g. a required field is missing.
-        :return: The `dict` representation of this object.
-        """
-        result = {}
-        properties = _JsonCommon.get_decorated_properties(self)
-        if not properties.keys():
-            raise ConfigurationError("The class doesn't define any fields which can be serialized into JSON")
-
-        for key in properties.keys():
-            wrapper = properties[key].fget.__wrapped__
-            property_value = properties[key].fget(self)
-
-            if key:
-                result[key] = _JsonSerialization.get_normalized_value(property_value)
-
-        _JsonValidation.validate_fields(self)
-
-        return result
-
-
-JSONObject = JsonObject
-
 
 class _JsonCommon(object):
     @classmethod
     def get_decorated_properties(cls, obj):
         """
-        Get all properties from an object which are annotated with the ``field()`` decorator.
+        Get all properties from an object which are annotated with the `field()` decorator.
 
         :param obj: The instance of the object from which the properties should be extracted.
-        :return: A `dict` containing all properties which are decorated with the :func:`field` decorator.
+        :return: A `dict` containing all properties which are decorated with the `field()` decorator.
         In this `dict` the key is the name of the field (how it should appear in the JSON) and the value is the
-        corresponding :class:`property`.
+        corresponding `property`.
         """
         result = {}
 
@@ -263,9 +269,9 @@ class _JsonCommon(object):
         :return: `True` if the values type is simple; `False` otherwise.
         """
         return (
-                type(value) is str or
-                type(value) is int or
-                type(value) is float
+            type(value) is str or
+            type(value) is int or
+            type(value) is float
         )
 
     @classmethod
@@ -306,7 +312,7 @@ class _JsonSerialization(object):
 
             return result
         elif isinstance(value, JsonObject):
-            return value.to_json_dict()
+            return Serializer.to_json_dict(value)
         elif isinstance(value, datetime.datetime):
             if value.tzinfo:
                 return value.strftime(DATETIME_TZ_FORMAT)
@@ -344,9 +350,10 @@ class _JsonDeserialization(object):
 
             return normalized_value
         elif isinstance(normalized_value, dict):
-            most_matching_json_object = cls.get_most_matching_json_object(normalized_value)
-            if most_matching_json_object:
-                return most_matching_json_object.from_json_dict(normalized_value)
+            try:
+                return Deserializer.from_json_dict(normalized_value)
+            except MissingObjectError:
+                pass
 
             return {key: cls.reverse_normalized_value(normalized_value[key]) for key in normalized_value.keys()}
         elif type(normalized_value) is list:
@@ -391,7 +398,7 @@ class _JsonDeserialization(object):
         if matching_objects:
             return sorted(matching_objects, key=lambda x: x[key_occurrences], reverse=True)[0][key_object]
 
-        return None
+        raise MissingObjectError("No matching JsonObject could be found")
 
     @classmethod
     def validate_if_required_fields_satisfied(cls, json_object, json_dict):

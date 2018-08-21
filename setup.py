@@ -5,7 +5,7 @@ with open("README.md", "r") as f:
 
 setuptools.setup(
     name="json-transform",
-    version="0.1.8",
+    version="0.1.9",
     author="Peter Morawski",
     author_email="contact@peter-morawski.de",
     keywords="json transform parsing",
