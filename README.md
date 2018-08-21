@@ -42,17 +42,19 @@ class Customer(JsonObject):
 Instantiate the object and serialize it.
 
 ```python
+from jsontransform import Serializer
+
 new_customer = Customer()
 new_customer.first_name = "Peter"
 new_customer.age = 1
 
 # get a dict representation of the object
 # result: {"firstName": "Peter", "age": 1}
-new_customer.to_json_dict()
+Serializer.to_json_dict(new_customer)
 
 # we can also write the object directly into a file
 with open("new_customer.json", "w") as f:
-    new_customer.to_json_file(f)
+    Serializer.to_json_file(f, new_customer)
 ```
 
 Deserialize a JSON file into your object.
@@ -69,9 +71,11 @@ Deserialize a JSON file into your object.
 **Code:**
 
 ```python
+from jsontransform import Deserializer
+
 # we load our customer object
 with open("customer.json", "r") as f:
-    customer = Customer.from_json_file(f)
+    customer = Deserializer.from_json_file(f)
     
 customer.age
 # result: 70
