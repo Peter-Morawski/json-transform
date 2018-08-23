@@ -271,7 +271,8 @@ class _JsonCommon(object):
         return (
             type(value) is str or
             type(value) is int or
-            type(value) is float
+            type(value) is float or
+            type(value) is bool
         )
 
     @classmethod

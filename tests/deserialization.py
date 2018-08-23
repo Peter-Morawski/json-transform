@@ -54,6 +54,13 @@ class DictDeserialization(unittest.TestCase):
         actual = Deserializer.from_json_dict(d, Container)
         self.assertEqual(d[Container.CONTAINER_FIELD_NAME], actual.container)
 
+    def test_bool(self):
+        d = {
+            Container.CONTAINER_FIELD_NAME: True
+        }
+        actual = Deserializer.from_json_dict(d, Container)
+        self.assertEqual(d[Container.CONTAINER_FIELD_NAME], actual.container)
+
     def test_str(self):
         d = {
             Container.CONTAINER_FIELD_NAME: "some string"
@@ -120,35 +127,42 @@ class DictDeserialization(unittest.TestCase):
             Container.CONTAINER_FIELD_NAME: [None, None, None]
         }
         actual = Deserializer.from_json_dict(d, Container)
-        self.assertEqual(d[Container.CONTAINER_FIELD_NAME], actual.container)
+        self.assertListEqual(d[Container.CONTAINER_FIELD_NAME], actual.container)
+
+    def test_list_with_bool(self):
+        d = {
+            Container.CONTAINER_FIELD_NAME: [True, False, True]
+        }
+        actual = Deserializer.from_json_dict(d, Container)
+        self.assertListEqual(d[Container.CONTAINER_FIELD_NAME], actual.container)
 
     def test_list_with_empty_dict(self):
         d = {
             Container.CONTAINER_FIELD_NAME: [{}]
         }
         actual = Deserializer.from_json_dict(d, Container)
-        self.assertEqual(d[Container.CONTAINER_FIELD_NAME], actual.container)
+        self.assertListEqual(d[Container.CONTAINER_FIELD_NAME], actual.container)
 
     def test_list_with_str(self):
         d = {
             Container.CONTAINER_FIELD_NAME: ["some string", "another string", "aaaaaa strriiiiinggg"]
         }
         actual = Deserializer.from_json_dict(d, Container)
-        self.assertEqual(d[Container.CONTAINER_FIELD_NAME], actual.container)
+        self.assertListEqual(d[Container.CONTAINER_FIELD_NAME], actual.container)
 
     def test_list_with_int(self):
         d = {
             Container.CONTAINER_FIELD_NAME: [1, 2, 3, 4, 5, 6]
         }
         actual = Deserializer.from_json_dict(d, Container)
-        self.assertEqual(d[Container.CONTAINER_FIELD_NAME], actual.container)
+        self.assertListEqual(d[Container.CONTAINER_FIELD_NAME], actual.container)
 
     def test_list_with_float(self):
         d = {
             Container.CONTAINER_FIELD_NAME: [1.123, 2.234, 3.345, 4.456]
         }
         actual = Deserializer.from_json_dict(d, Container)
-        self.assertEqual(d[Container.CONTAINER_FIELD_NAME], actual.container)
+        self.assertListEqual(d[Container.CONTAINER_FIELD_NAME], actual.container)
 
     def test_list_with_json_object(self):
         d = {
@@ -182,7 +196,7 @@ class DictDeserialization(unittest.TestCase):
             Container.CONTAINER_FIELD_NAME: [[], [1, 2, 3], ["some string", "another string"]]
         }
         actual = Deserializer.from_json_dict(d, Container)
-        self.assertEqual(d[Container.CONTAINER_FIELD_NAME], actual.container)
+        self.assertListEqual(d[Container.CONTAINER_FIELD_NAME], actual.container)
 
     def test_list_with_dict(self):
         d = {

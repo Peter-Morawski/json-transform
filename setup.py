@@ -5,10 +5,10 @@ with open("README.md", "r") as f:
 
 setuptools.setup(
     name="json-transform",
-    version="0.1.9",
+    version="0.1.9.1",
     author="Peter Morawski",
     author_email="contact@peter-morawski.de",
-    keywords="json transform parsing",
+    keywords="json parsing serializing deserializing through python classes objects",
     description="Allows to serialize python classes into JSON objects and deserialize JSON objects into python classes",
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -18,7 +18,7 @@ setuptools.setup(
     py_modules=["jsontransform"],
     license="MIT License",
     classifiers=(
-        "Development Status :: 2 - Pre-Alpha",
+        "Development Status :: 3 - Alpha",
         "Intended Audience :: Developers",
         "License :: OSI Approved :: MIT License",
         "Programming Language :: Python",
