@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import sys
 import unittest
 import datetime
 from jsontransform import ConfigurationError, FieldValidationError, MissingObjectError, Deserializer
@@ -66,6 +67,17 @@ class DictDeserialization(unittest.TestCase):
             Container.CONTAINER_FIELD_NAME: "some string"
         }
         actual = Deserializer.from_json_dict(d, Container)
+        self.assertEqual(d[Container.CONTAINER_FIELD_NAME], actual.container)
+
+    def test_unicode(self):
+        d = {
+            Container.CONTAINER_FIELD_NAME: u"some unicode string"
+        }
+        actual = Deserializer.from_json_dict(d, Container)
+
+        if sys.version_info.major == 2:
+            assert type(actual.container) is unicode
+
         self.assertEqual(d[Container.CONTAINER_FIELD_NAME], actual.container)
 
     def test_int(self):
@@ -148,6 +160,18 @@ class DictDeserialization(unittest.TestCase):
             Container.CONTAINER_FIELD_NAME: ["some string", "another string", "aaaaaa strriiiiinggg"]
         }
         actual = Deserializer.from_json_dict(d, Container)
+        self.assertListEqual(d[Container.CONTAINER_FIELD_NAME], actual.container)
+
+    def test_list_with_unicode(self):
+        d = {
+            Container.CONTAINER_FIELD_NAME: [u"some unicode string", u"another unicode string", u"aaaaa"]
+        }
+        actual = Deserializer.from_json_dict(d, Container)
+
+        if sys.version_info.major == 2:
+            for element in actual.container:
+                assert type(element) is unicode
+
         self.assertListEqual(d[Container.CONTAINER_FIELD_NAME], actual.container)
 
     def test_list_with_int(self):
@@ -410,6 +434,37 @@ class DictDeserializationTimes(unittest.TestCase):
 
         assert len(actual.container) == 1
         assert type(actual.container[0]) is str
+
+    def test_if_date_parsed_from_unicode(self):
+        d = {
+            Container.CONTAINER_FIELD_NAME: u"{}".format(self.DATE)
+        }
+        actual = Deserializer.from_json_dict(d)
+
+        assert type(actual.container) is datetime.date
+        assert type(actual.container) is not datetime.datetime
+
+        self._assert_date_equal(actual.container)
+
+    def test_if_naive_datetime_parsed_from_unicode(self):
+        d = {
+            Container.CONTAINER_FIELD_NAME: u"{}T{}Z".format(self.DATE, self.TIME)
+        }
+        actual = Deserializer.from_json_dict(d)
+
+        assert type(actual.container) is datetime.datetime
+
+        self._assert_datetime_equal(actual.container)
+
+    def test_if_datetime_with_timezone_parsed_from_unicode(self):
+        d = {
+            Container.CONTAINER_FIELD_NAME: u"{}T{}+0000".format(self.DATE, self.TIME)
+        }
+        actual = Deserializer.from_json_dict(d)
+
+        assert type(actual.container) is datetime.datetime
+
+        self._check_datetime_utc_offset(actual.container, 0)
 
 
 class DictDeserializationWithRequiredField(unittest.TestCase):

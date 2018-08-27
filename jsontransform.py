@@ -1,12 +1,16 @@
 # -*- coding: utf-8 -*-
 
 import re
+import sys
 import json
 import inspect
 import datetime
 import collections
 from decorator import decorator
 from dateutil import parser
+
+__author__ = "Peter Morawski"
+__version__ = "0.2.0"
 
 DATE_FORMAT = "%Y-%m-%d"
 DATETIME_TZ_FORMAT = "%Y-%m-%dT%H:%M:%S%z"
@@ -268,22 +272,34 @@ class _JsonCommon(object):
         :param value: The value which should be checked.
         :return: `True` if the values type is simple; `False` otherwise.
         """
-        return (
+        result = (
             type(value) is str or
             type(value) is int or
             type(value) is float or
             type(value) is bool
         )
 
+        if not result and sys.version_info.major == 2:
+            result = type(value) is unicode
+
+        return result
+
     @classmethod
     def value_not_str_and_iterable(cls, value):
         """
-        Check if a property of a class is iterable and **NOT** a `str`.
+        Check if a property of a class is iterable and **NOT** an `str` or `unicode`.
 
         :param value: The value which should be checked.
-        :return: `True` if the value is iterable and **NOT** a `str`; `False` otherwise.
+        :return: `True` if the value is iterable and **NOT** an `str` or `unicode`; `False` otherwise.
         """
-        return type(value) is not str and isinstance(value, collections.Iterable)
+        if sys.version_info.major == 2:
+            if type(value) is unicode:
+                return False
+
+        if type(value) is str:
+            return False
+
+        return isinstance(value, collections.Iterable)
 
 
 class _JsonSerialization(object):
@@ -341,7 +357,7 @@ class _JsonDeserialization(object):
         if normalized_value is None:
             return normalized_value
         elif _JsonCommon.value_is_simple_type(normalized_value):
-            if type(normalized_value) is str:
+            if type(normalized_value) is str or sys.version_info.major == 2 and type(normalized_value) is unicode:
                 if re.match(_DATE_FORMAT_REGEX, normalized_value):
                     return datetime.datetime.strptime(normalized_value, DATE_FORMAT).date()
                 elif re.match(_DATETIME_FORMAT_REGEX, normalized_value):

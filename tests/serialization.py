@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import sys
 import unittest
 import datetime
 from .datastructure import JsonObjectWithoutFields, NotSerializableObject, ExtendedCar, Container, \
@@ -46,6 +47,20 @@ class DictSerialization(unittest.TestCase):
 
         assert type(actual[Container.CONTAINER_FIELD_NAME]) is str
         self.assertEqual(self._container.container, actual[Container.CONTAINER_FIELD_NAME])
+
+    def test_unicode(self):
+        self._container.container = u"some unicode string"
+        actual = Serializer.to_json_dict(self._container)
+
+        self._assert_unicode_and_equal(self._container.container, actual[Container.CONTAINER_FIELD_NAME])
+
+    def _assert_unicode_and_equal(self, expected, actual):
+        if sys.version_info.major == 2:
+            assert type(actual) is unicode
+        else:
+            assert type(actual) is str
+
+        self.assertEqual(expected, actual)
 
     def test_int(self):
         self._container.container = 42
@@ -107,6 +122,21 @@ class DictSerialization(unittest.TestCase):
 
         assert type(actual[Container.CONTAINER_FIELD_NAME]) is list
         self.assertListEqual(self._container.container, actual[Container.CONTAINER_FIELD_NAME])
+
+    def test_list_with_unicode(self):
+        self._container.container = [u"some unicode string", u"another unicode string"]
+        actual = Serializer.to_json_dict(self._container)
+
+        self._assert_unicode_iterable_and_equal(self._container.container, actual[Container.CONTAINER_FIELD_NAME])
+
+    def _assert_unicode_iterable_and_equal(self, expected, actual):
+        for element in actual:
+            if sys.version_info.major == 2:
+                assert type(element) is unicode
+            else:
+                assert type(element) is str
+
+        self.assertListEqual(list(expected), list(actual))
 
     def test_list_with_int(self):
         self._container.container = [1, 2, 3, 4]
@@ -225,6 +255,12 @@ class DictSerialization(unittest.TestCase):
 
         expected = list(self._container.container)
         self.assertListEqual(expected, actual[Container.CONTAINER_FIELD_NAME])
+
+    def test_tuple_with_unicode(self):
+        self._container.container = (u"some unicode string", u"another unicode string")
+        actual = Serializer.to_json_dict(self._container)
+
+        self._assert_unicode_iterable_and_equal(self._container.container, actual[Container.CONTAINER_FIELD_NAME])
 
     def test_tuple_with_int(self):
         self._container.container = (1, 2, 3, 4)
@@ -359,6 +395,12 @@ class DictSerialization(unittest.TestCase):
         expected = list(self._container.container)
         self.assertListEqual(expected, actual[Container.CONTAINER_FIELD_NAME])
 
+    def test_set_with_unicode(self):
+        self._container.container = {u"some unicode string", u"another unicode string"}
+        actual = Serializer.to_json_dict(self._container)
+
+        self._assert_unicode_iterable_and_equal(self._container.container, actual[Container.CONTAINER_FIELD_NAME])
+
     def test_set_with_int(self):
         self._container.container = {1, 2, 3, 4, 5, 6}
         actual = Serializer.to_json_dict(self._container)
@@ -425,7 +467,9 @@ class DictSerialization(unittest.TestCase):
         }
         actual = Serializer.to_json_dict(self._container)
 
-        assert type(actual[Container.CONTAINER_FIELD_NAME]) is dict
+        for key, value in actual[Container.CONTAINER_FIELD_NAME].items():
+            assert value is None
+
         self.assertDictEqual(self._container.container, actual[Container.CONTAINER_FIELD_NAME])
 
     def test_dict_with_bool(self):
@@ -434,7 +478,9 @@ class DictSerialization(unittest.TestCase):
         }
         actual = Serializer.to_json_dict(self._container)
 
-        assert type(actual[Container.CONTAINER_FIELD_NAME]) is dict
+        for key, value in actual[Container.CONTAINER_FIELD_NAME].items():
+            assert type(value) is bool
+
         self.assertDictEqual(self._container.container, actual[Container.CONTAINER_FIELD_NAME])
 
     def test_dict_with_str(self):
@@ -444,7 +490,24 @@ class DictSerialization(unittest.TestCase):
         }
         actual = Serializer.to_json_dict(self._container)
 
-        assert type(actual[Container.CONTAINER_FIELD_NAME]) is dict
+        for key, value in actual[Container.CONTAINER_FIELD_NAME].items():
+            assert type(value) is str
+
+        self.assertDictEqual(self._container.container, actual[Container.CONTAINER_FIELD_NAME])
+
+    def test_dict_with_unicode(self):
+        self._container.container = {
+            "key1": u"some unicode string",
+            "key2": u"another unicode string"
+        }
+        actual = Serializer.to_json_dict(self._container)
+
+        for key, value in actual[Container.CONTAINER_FIELD_NAME].items():
+            if sys.version_info.major == 2:
+                assert type(value) is unicode
+            else:
+                assert type(value) is str
+
         self.assertDictEqual(self._container.container, actual[Container.CONTAINER_FIELD_NAME])
 
     def test_dict_with_int(self):
@@ -454,7 +517,9 @@ class DictSerialization(unittest.TestCase):
         }
         actual = Serializer.to_json_dict(self._container)
 
-        assert type(actual[Container.CONTAINER_FIELD_NAME]) is dict
+        for key, value in actual[Container.CONTAINER_FIELD_NAME].items():
+            assert type(value) is int
+
         self.assertDictEqual(self._container.container, actual[Container.CONTAINER_FIELD_NAME])
 
     def test_dict_with_float(self):
@@ -464,7 +529,9 @@ class DictSerialization(unittest.TestCase):
         }
         actual = Serializer.to_json_dict(self._container)
 
-        assert type(actual[Container.CONTAINER_FIELD_NAME]) is dict
+        for key, value in actual[Container.CONTAINER_FIELD_NAME].items():
+            assert type(value) is float
+
         self.assertDictEqual(self._container.container, actual[Container.CONTAINER_FIELD_NAME])
 
     def test_dict_with_json_object(self):
@@ -474,7 +541,8 @@ class DictSerialization(unittest.TestCase):
         }
         actual = Serializer.to_json_dict(self._container)
 
-        assert type(actual[Container.CONTAINER_FIELD_NAME]) is dict
+        for key, value in actual[Container.CONTAINER_FIELD_NAME].items():
+            assert type(value) is dict
 
         expected = {
             key: Serializer.to_json_dict(self._container.container[key]) for key in self._container.container.keys()
@@ -506,7 +574,9 @@ class DictSerialization(unittest.TestCase):
         }
         actual = Serializer.to_json_dict(self._container)
 
-        assert type(actual[Container.CONTAINER_FIELD_NAME]) is dict
+        for key, value in actual[Container.CONTAINER_FIELD_NAME].items():
+            assert type(value) is list
+
         self.assertDictEqual(self._container.container, actual[Container.CONTAINER_FIELD_NAME])
 
     def test_dict_with_tuple(self):
@@ -517,7 +587,8 @@ class DictSerialization(unittest.TestCase):
         }
         actual = Serializer.to_json_dict(self._container)
 
-        assert type(actual[Container.CONTAINER_FIELD_NAME]) is dict
+        for key, value in actual[Container.CONTAINER_FIELD_NAME].items():
+            assert type(value) is list
 
         expected = {key: list(self._container.container[key]) for key in self._container.container.keys()}
         self.assertDictEqual(expected, actual[Container.CONTAINER_FIELD_NAME])
@@ -529,7 +600,8 @@ class DictSerialization(unittest.TestCase):
         }
         actual = Serializer.to_json_dict(self._container)
 
-        assert type(actual[Container.CONTAINER_FIELD_NAME]) is dict
+        for key, value in actual[Container.CONTAINER_FIELD_NAME].items():
+            assert type(value) is list
 
         expected = {key: list(self._container.container[key]) for key in self._container.container.keys()}
         self.assertDictEqual(expected, actual[Container.CONTAINER_FIELD_NAME])
@@ -546,7 +618,9 @@ class DictSerialization(unittest.TestCase):
         }
         actual = Serializer.to_json_dict(self._container)
 
-        assert type(actual[Container.CONTAINER_FIELD_NAME]) is dict
+        for key, value in actual[Container.CONTAINER_FIELD_NAME].items():
+            assert type(value) is dict
+
         self.assertDictEqual(self._container.container, actual[Container.CONTAINER_FIELD_NAME])
 
     def test_inheritance(self):
