@@ -1,6 +1,11 @@
 # History
 
+## 0.2.0 (2018-08-27)
+
+* added support for the type unicode
+
 ## 0.1.9.1 (2018-08-23)
+
 * fixed the problem where the type bool would not be recognized during serialization/deserialization
 
 ## 0.1.9 (2018-08-21)
