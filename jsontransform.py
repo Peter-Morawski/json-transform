@@ -10,15 +10,15 @@ from decorator import decorator
 from dateutil import parser
 
 __author__ = "Peter Morawski"
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 
 DATE_FORMAT = "%Y-%m-%d"
 DATETIME_TZ_FORMAT = "%Y-%m-%dT%H:%M:%S%z"
 DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 
 _DATE_FORMAT_REGEX = r"^[0-9]{4}-[0-9]{1,}-[0-9]{1,}$"
-_DATETIME_TZ_FORMAT_REGEX = r"^[0-9]{4}-[0-9]{1,}-[0-9]{1,}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\+|\-)[0-9]{4}$"
-_DATETIME_FORMAT_REGEX = r"^[0-9]{4}-[0-9]{1,}-[0-9]{1,}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
+_DATETIME_FORMAT_REGEX = r"^([0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]{8})T([0-9]{2}(:[0-9]{2})?(:[0-9]{2})?|[0-9]{6}|[0-9]{4}" \
+                         r")(\.[0-9]{2,3})?(Z|((\+|-)[0-9]{2}:?([0-9]{2})?))$"
 
 _JSON_FIELD_NAME = "_json_field_name"
 _JSON_FIELD_REQUIRED = "_json_field_required"
@@ -361,8 +361,6 @@ class _JsonDeserialization(object):
                 if re.match(_DATE_FORMAT_REGEX, normalized_value):
                     return datetime.datetime.strptime(normalized_value, DATE_FORMAT).date()
                 elif re.match(_DATETIME_FORMAT_REGEX, normalized_value):
-                    return datetime.datetime.strptime(normalized_value, DATETIME_FORMAT)
-                elif re.match(_DATETIME_TZ_FORMAT_REGEX, normalized_value):
                     return parser.isoparse(normalized_value)
 
             return normalized_value

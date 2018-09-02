@@ -1,5 +1,12 @@
 # History
 
+## 0.3.0 (2018-09-02)
+
+* added a better compliance for the ISO-8601 date format with a few exceptions which are **NOT** implemented:
+  * calendar dates with `YYYY-MM` and `--MM-DD`/`--MMDD`
+  * week dates **completely**
+  * ordinal dates **completely**
+
 ## 0.2.0 (2018-08-27)
 
 * added support for the type unicode

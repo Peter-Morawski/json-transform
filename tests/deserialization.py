@@ -258,6 +258,7 @@ class DictDeserialization(unittest.TestCase):
 class DictDeserializationTimes(unittest.TestCase):
     DATE = "2018-08-13"
     TIME = "16:00:00"
+    TIME_WITH_MICROSECONDS = TIME + ".265"
 
     def test_date(self):
         d = {
@@ -320,7 +321,6 @@ class DictDeserializationTimes(unittest.TestCase):
         assert type(actual.container) is datetime.datetime
         self._assert_datetime_equal(actual.container)
         self.assertIsNotNone(actual.container.tzinfo)
-
         self._check_datetime_utc_offset(actual.container, utc_offset_hours)
 
     def _check_datetime_utc_offset(self, dt, expected_offset_hours):
@@ -465,6 +465,39 @@ class DictDeserializationTimes(unittest.TestCase):
         assert type(actual.container) is datetime.datetime
 
         self._check_datetime_utc_offset(actual.container, 0)
+
+    def test_datetime_with_seconds_and_utc_timezone(self):
+        self._datetime_with_seconds_and_timezone_helper("+0000", 0)
+
+    def test_datetime_with_seconds_and_berlin_timezone(self):
+        self._datetime_with_seconds_and_timezone_helper("+0200", 2)
+
+    def test_datetime_with_seconds_and_london_timezone(self):
+        self._datetime_with_seconds_and_timezone_helper("+0100", 1)
+
+    def test_datetime_with_seconds_and_istanbul_timezone(self):
+        self._datetime_with_seconds_and_timezone_helper("+0300", 3)
+
+    def test_datetime_with_seconds_and_tokyo_timezone(self):
+        self._datetime_with_seconds_and_timezone_helper("+0900", 9)
+
+    def test_datetime_with_seconds_and_new_york_timezone(self):
+        self._datetime_with_seconds_and_timezone_helper(get_new_york_utc_offset(), get_new_york_utc_offset_as_int())
+
+    def _datetime_with_seconds_and_timezone_helper(self, utc_offset, utc_offset_hours):
+        d = {
+            Container.CONTAINER_FIELD_NAME: "{}T{}{}".format(self.DATE, self.TIME_WITH_MICROSECONDS, utc_offset)
+        }
+        actual = Deserializer.from_json_dict(d)
+
+        assert type(actual.container) is datetime.datetime
+        self._assert_datetime_with_microseconds_equal(actual.container)
+        self._check_datetime_utc_offset(actual.container, utc_offset_hours)
+
+    def _assert_datetime_with_microseconds_equal(self, d):
+        self._assert_date_equal(d)
+        self._assert_datetime_equal(d)
+        self.assertEqual(265000, d.microsecond)
 
 
 class DictDeserializationWithRequiredField(unittest.TestCase):
