@@ -10,7 +10,7 @@ from decorator import decorator
 from dateutil import parser
 
 __author__ = "Peter Morawski"
-__version__ = "0.3.0"
+__version__ = "0.3.1"
 
 DATE_FORMAT = "%Y-%m-%d"
 DATETIME_TZ_FORMAT = "%Y-%m-%dT%H:%M:%S%z"

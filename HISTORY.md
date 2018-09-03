@@ -1,5 +1,9 @@
 # History
 
+## 0.3.1 (2018-09-03)
+
+* fix the installation error which was caused in version 0.3.0
+
 ## 0.3.0 (2018-09-02)
 
 * added a better compliance for the ISO-8601 date format with a few exceptions which are **NOT** implemented:

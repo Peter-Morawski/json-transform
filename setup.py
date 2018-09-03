@@ -1,12 +1,11 @@
 import setuptools
-from jsontransform import __version__
 
 with open("README.md", "r") as f:
     long_description = f.read()
 
 setuptools.setup(
     name="json-transform",
-    version=__version__,
+    version="0.3.1",
     author="Peter Morawski",
     author_email="contact@peter-morawski.de",
     keywords="json serializing deserializing through python objects",
