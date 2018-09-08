@@ -344,6 +344,9 @@ class _JsonSerialization(object):
 
 
 class _JsonDeserialization(object):
+    _KEY_OCCURRENCES = "occurrences"
+    _KEY_OBJECT = "object"
+
     @classmethod
     def reverse_normalized_value(cls, normalized_value):
         """
@@ -384,23 +387,30 @@ class _JsonDeserialization(object):
                             .format(type(normalized_value)))
 
     @classmethod
-    def get_most_matching_json_object(cls, value):
+    def get_most_matching_json_object(cls, json_dict):
         """
-        Given a `dict` check which :class:`JsonObject` matches it the most.
+        Given a json `dict` check which :class:`JsonObject` matches it the most.
 
-        :param value: The `dict` for which the :class:`JsonObject` should be searched.
-        :return: The :class:`JsonObject` which matched mostly with the given `dict`; `None` if none of the objects did
-        match.
+        :param json_dict: The `dict` for which the most matching `JsonObject` should be searched.
+        :raises MissingObjectError: When no matching `JsonObject` could ne found.
+        :return: The `JsonObject` which matched the most with the given `dict`.
         """
-        key_occurrences = "occurrences"
-        key_object = "object"
+        matching_objects = cls._search_matching_json_object(json_dict, JsonObject)
+
+        if matching_objects:
+            return sorted(matching_objects, key=lambda x: x[cls._KEY_OCCURRENCES], reverse=True)[0][cls._KEY_OBJECT]
+
+        raise MissingObjectError("No matching JsonObject could be found")
+
+    @classmethod
+    def _search_matching_json_object(cls, json_dict, json_object):
         matching_objects = []
 
-        for json_object in JsonObject.__subclasses__():
+        for obj in json_object.__subclasses__():
             occurrences = 0
-            properties = _JsonCommon.get_decorated_properties(json_object())
+            properties = _JsonCommon.get_decorated_properties(obj())
 
-            for value_property in value.keys():
+            for value_property in json_dict.keys():
                 for object_property in properties.keys():
                     if value_property == object_property:
                         occurrences += 1
@@ -408,14 +418,15 @@ class _JsonDeserialization(object):
 
             if occurrences:
                 matching_objects.append({
-                    key_occurrences: occurrences,
-                    key_object: json_object
+                    cls._KEY_OCCURRENCES: occurrences,
+                    cls._KEY_OBJECT: obj
                 })
 
-        if matching_objects:
-            return sorted(matching_objects, key=lambda x: x[key_occurrences], reverse=True)[0][key_object]
+            matching_sub_objects = cls._search_matching_json_object(json_dict, obj)
+            for match in matching_sub_objects:
+                matching_objects.append(match)
 
-        raise MissingObjectError("No matching JsonObject could be found")
+        return matching_objects
 
     @classmethod
     def validate_if_required_fields_satisfied(cls, json_object, json_dict):

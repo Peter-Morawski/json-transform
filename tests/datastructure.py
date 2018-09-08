@@ -122,6 +122,23 @@ class ExtendedCar(Car):
         self._horsepower = value
 
 
+class ExtendedExtendedCar(ExtendedCar):
+    FIELD_COLOR_NAME = "color"
+
+    def __init__(self):
+        super(ExtendedExtendedCar, self).__init__()
+        self._color = ""
+
+    @property
+    @field()
+    def color(self):
+        return self._color
+
+    @color.setter
+    def color(self, value):
+        self._color = value
+
+
 class JsonObjectWithRequiredField(JsonObject):
     SOME_FIELD_NAME = "someField"
     REQUIRED_FIELD_NAME = "requiredField"
