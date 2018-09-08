@@ -10,7 +10,7 @@ from decorator import decorator
 from dateutil import parser
 
 __author__ = "Peter Morawski"
-__version__ = "0.3.1"
+__version__ = "0.4.0"
 
 DATE_FORMAT = "%Y-%m-%d"
 DATETIME_TZ_FORMAT = "%Y-%m-%dT%H:%M:%S%z"
@@ -445,7 +445,10 @@ class _JsonDeserialization(object):
 
         for field_name in required_field_names:
             if field_name not in json_dict.keys():
-                raise FieldValidationError("The field `{}` is missing".format(field_name))
+                raise FieldValidationError("The field `{}` is missing in the object `{}`".format(
+                    field_name,
+                    json_object.__class__.__name__
+                ))
 
 
 class _JsonField(object):

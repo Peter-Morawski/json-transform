@@ -24,9 +24,9 @@ copyright = u'2018, Peter Morawski'
 author = u'Peter Morawski'
 
 # The short X.Y version
-version = u'0.3.1'
+version = u'0.4.0'
 # The full version, including alpha/beta/rc tags
-release = u'0.3.1-ALPHA'
+release = u'0.4.0-ALPHA'
 
 
 # -- General configuration ---------------------------------------------------

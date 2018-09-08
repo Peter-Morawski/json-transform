@@ -1,5 +1,10 @@
 # History
 
+## 0.4.0 (2018-09-08)
+
+* added the name of the object to the `FieldValidationError` which is thrown in the `validate_if_required_fields_satisfied`
+* fixed the wrong object type when searching the most matching `JsonObject` while deserializing
+
 ## 0.3.1 (2018-09-03)
 
 * fix the installation error which was caused in version 0.3.0
