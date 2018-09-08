@@ -709,7 +709,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
         self.assertTrue(type(actual.container) is datetime.datetime)
         self._assert_naive_datetime_with_microsecond(actual.container)
 
-    def _assert_naive_datetime_with_microsecond(self, actual: datetime.datetime):
+    def _assert_naive_datetime_with_microsecond(self, actual):
         self._assert_naive_datetime(actual)
         self.assertEqual(actual.microsecond, 265000)
 
