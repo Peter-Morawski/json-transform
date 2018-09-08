@@ -625,3 +625,685 @@ class DictDeserializationWithNotNullable(unittest.TestCase):
 
         with self.assertRaises(FieldValidationError):
             Deserializer.from_json_dict(d, Container)
+
+
+class DictDeserializationISO8601Compliance(unittest.TestCase):
+    EXTENDED_DATE = "2018-08-13"
+    BASIC_DATE = "20180813"
+    EXTENDED_TIME = "16:31:12"
+    BASIC_TIME = "163112"
+    MICROSECOND = "265"
+    EXTENDED_TIME_WITHOUT_SECOND = "16:31"
+    BASIC_TIME_WITHOUT_SECOND = "1631"
+    TIME_ONLY_HOUR = "16"
+    EXTENDED_UTC_OFFSET = "+02:00"
+    BASIC_UTC_OFFSET = "+0200"
+    UTC_OFFSET_ONLY_HOUR = "+02"
+
+    def setUp(self):
+        self._d = {}
+
+    def test_extended_date_format(self):
+        self._d[Container.CONTAINER_FIELD_NAME] = self.EXTENDED_DATE
+        actual = Deserializer.from_json_dict(self._d)
+
+        self.assertTrue(type(actual.container) is datetime.date)
+        self.assertTrue(type(actual.container) is not datetime.datetime)
+        self._assert_date(actual.container)
+
+    def _assert_date(self, actual):
+        self.assertEqual(actual.year, 2018)
+        self.assertEqual(actual.month, 8)
+        self.assertEqual(actual.day, 13)
+
+    def test_basic_date_format(self):
+        self._d[Container.CONTAINER_FIELD_NAME] = self.BASIC_DATE
+        actual = Deserializer.from_json_dict(self._d)
+
+        self.assertTrue(type(actual.container) is datetime.date)
+        self.assertTrue(type(actual.container) is not datetime.datetime)
+        self._assert_date(actual.container)
+
+    def test_extended_naive_datetime_with_extended_time(self):
+        self._d[Container.CONTAINER_FIELD_NAME] = "{}T{}Z".format(self.EXTENDED_DATE, self.EXTENDED_TIME)
+        actual = Deserializer.from_json_dict(self._d)
+
+        self.assertTrue(type(actual.container) is datetime.datetime)
+        self._assert_naive_datetime(actual.container)
+
+    def _assert_naive_datetime(self, actual):
+        self._assert_date(actual)
+        self.assertEqual(actual.hour, 16)
+        self.assertEqual(actual.minute, 31)
+        self.assertEqual(actual.second, 12)
+
+    def test_basic_naive_datetime_with_extended_time(self):
+        self._d[Container.CONTAINER_FIELD_NAME] = "{}T{}Z".format(self.BASIC_DATE, self.EXTENDED_TIME)
+        actual = Deserializer.from_json_dict(self._d)
+
+        self.assertTrue(type(actual.container) is datetime.datetime)
+        self._assert_naive_datetime(actual.container)
+
+    def test_extended_naive_datetime_with_basic_time(self):
+        self._d[Container.CONTAINER_FIELD_NAME] = "{}T{}Z".format(self.EXTENDED_DATE, self.BASIC_TIME)
+        actual = Deserializer.from_json_dict(self._d)
+
+        self.assertTrue(type(actual.container) is datetime.datetime)
+        self._assert_naive_datetime(actual.container)
+
+    def test_basic_naive_datetime_with_basic_time(self):
+        self._d[Container.CONTAINER_FIELD_NAME] = "{}T{}Z".format(self.BASIC_DATE, self.BASIC_TIME)
+        actual = Deserializer.from_json_dict(self._d)
+
+        self.assertTrue(type(actual.container) is datetime.datetime)
+        self._assert_naive_datetime(actual.container)
+
+    def test_extended_naive_datetime_with_extended_time_with_microsecond(self):
+        self._d[Container.CONTAINER_FIELD_NAME] = "{}T{}.{}Z".format(
+            self.EXTENDED_DATE,
+            self.EXTENDED_TIME,
+            self.MICROSECOND
+        )
+        actual = Deserializer.from_json_dict(self._d)
+
+        self.assertTrue(type(actual.container) is datetime.datetime)
+        self._assert_naive_datetime_with_microsecond(actual.container)
+
+    def _assert_naive_datetime_with_microsecond(self, actual: datetime.datetime):
+        self._assert_naive_datetime(actual)
+        self.assertEqual(actual.microsecond, 265000)
+
+    def test_basic_naive_datetime_with_extended_time_with_microsecond(self):
+        self._d[Container.CONTAINER_FIELD_NAME] = "{}T{}.{}Z".format(
+            self.BASIC_DATE,
+            self.EXTENDED_TIME,
+            self.MICROSECOND
+        )
+        actual = Deserializer.from_json_dict(self._d)
+
+        self.assertTrue(type(actual.container) is datetime.datetime)
+        self._assert_naive_datetime_with_microsecond(actual.container)
+
+    def test_extended_naive_datetime_with_basic_time_with_microsecond(self):
+        self._d[Container.CONTAINER_FIELD_NAME] = "{}T{}.{}Z".format(
+            self.EXTENDED_DATE,
+            self.BASIC_TIME,
+            self.MICROSECOND
+        )
+        actual = Deserializer.from_json_dict(self._d)
+
+        self.assertTrue(type(actual.container) is datetime.datetime)
+        self._assert_naive_datetime_with_microsecond(actual.container)
+
+    def test_basic_naive_datetime_with_basic_time_with_microsecond(self):
+        self._d[Container.CONTAINER_FIELD_NAME] = "{}T{}.{}Z".format(
+            self.BASIC_DATE,
+            self.BASIC_TIME,
+            self.MICROSECOND
+        )
+        actual = Deserializer.from_json_dict(self._d)
+
+        self.assertTrue(type(actual.container) is datetime.datetime)
+        self._assert_naive_datetime_with_microsecond(actual.container)
+
+    def test_extended_naive_datetime_with_extended_time_without_second(self):
+        self._d[Container.CONTAINER_FIELD_NAME] = "{}T{}Z".format(
+            self.EXTENDED_DATE,
+            self.EXTENDED_TIME_WITHOUT_SECOND
+        )
+        actual = Deserializer.from_json_dict(self._d)
+
+        self.assertTrue(type(actual.container) is datetime.datetime)
+        self._assert_naive_datetime_without_second(actual.container)
+
+    def _assert_naive_datetime_without_second(self, actual):
+        self._assert_date(actual)
+        self.assertEqual(actual.hour, 16)
+        self.assertEqual(actual.minute, 31)
+        self.assertEqual(actual.second, 0)
+
+    def test_basic_naive_datetime_with_extended_time_without_second(self):
+        self._d[Container.CONTAINER_FIELD_NAME] = "{}T{}Z".format(
+            self.BASIC_DATE,
+            self.EXTENDED_TIME_WITHOUT_SECOND
+        )
+        actual = Deserializer.from_json_dict(self._d)
+
+        self.assertTrue(type(actual.container) is datetime.datetime)
+        self._assert_naive_datetime_without_second(actual.container)
+
+    def test_extended_naive_datetime_with_basic_time_without_second(self):
+        self._d[Container.CONTAINER_FIELD_NAME] = "{}T{}Z".format(
+            self.EXTENDED_DATE,
+            self.BASIC_TIME_WITHOUT_SECOND
+        )
+        actual = Deserializer.from_json_dict(self._d)
+
+        self.assertTrue(type(actual.container) is datetime.datetime)
+        self._assert_naive_datetime_without_second(actual.container)
+
+    def test_basic_naive_datetime_with_basic_time_without_second(self):
+        self._d[Container.CONTAINER_FIELD_NAME] = "{}T{}Z".format(
+            self.BASIC_DATE,
+            self.BASIC_TIME_WITHOUT_SECOND
+        )
+        actual = Deserializer.from_json_dict(self._d)
+
+        self.assertTrue(type(actual.container) is datetime.datetime)
+        self._assert_naive_datetime_without_second(actual.container)
+
+    def test_extended_naive_datetime_with_only_hour(self):
+        self._d[Container.CONTAINER_FIELD_NAME] = "{}T{}Z".format(self.EXTENDED_DATE, self.TIME_ONLY_HOUR)
+        actual = Deserializer.from_json_dict(self._d)
+
+        self.assertTrue(type(actual.container) is datetime.datetime)
+        self._assert_naive_datetime_with_only_hour(actual.container)
+
+    def _assert_naive_datetime_with_only_hour(self, actual):
+        self._assert_date(actual)
+        self.assertEqual(actual.hour, 16)
+        self.assertEqual(actual.minute, 0)
+        self.assertEqual(actual.second, 0)
+
+    def test_basic_naive_datetime_with_only_hour(self):
+        self._d[Container.CONTAINER_FIELD_NAME] = "{}T{}Z".format(self.BASIC_DATE, self.TIME_ONLY_HOUR)
+        actual = Deserializer.from_json_dict(self._d)
+
+        self.assertTrue(type(actual.container) is datetime.datetime)
+        self._assert_naive_datetime_with_only_hour(actual.container)
+
+    def test_extended_date_with_extended_time_and_extended_utc_offset(self):
+        self._d[Container.CONTAINER_FIELD_NAME] = "{}T{}{}".format(
+            self.EXTENDED_DATE,
+            self.EXTENDED_TIME,
+            self.EXTENDED_UTC_OFFSET
+        )
+        actual = Deserializer.from_json_dict(self._d)
+
+        self.assertTrue(type(actual.container) is datetime.datetime)
+        self._assert_datetime_with_utc_offset(actual.container)
+
+    def _assert_datetime_with_utc_offset(self, actual):
+        self._assert_naive_datetime(actual)
+        self._assert_utc_offset_is_right(actual)
+
+    def _assert_utc_offset_is_right(self, actual):
+        self.assertIsNotNone(actual.tzinfo)
+
+        utc_offset = actual.tzinfo.utcoffset(actual)
+        self.assertEqual(utc_offset.seconds, 2 * 60 * 60)
+
+    def test_basic_date_with_extended_time_and_extended_utc_offset(self):
+        self._d[Container.CONTAINER_FIELD_NAME] = "{}T{}{}".format(
+            self.BASIC_DATE,
+            self.EXTENDED_TIME,
+            self.EXTENDED_UTC_OFFSET
+        )
+        actual = Deserializer.from_json_dict(self._d)
+
+        self.assertTrue(type(actual.container) is datetime.datetime)
+        self._assert_datetime_with_utc_offset(actual.container)
+
+    def test_extended_date_with_extended_time_with_microsecond_and_extended_utc_offset(self):
+        self._d[Container.CONTAINER_FIELD_NAME] = "{}T{}.{}{}".format(
+            self.EXTENDED_DATE,
+            self.EXTENDED_TIME,
+            self.MICROSECOND,
+            self.EXTENDED_UTC_OFFSET
+        )
+        actual = Deserializer.from_json_dict(self._d)
+
+        self.assertTrue(type(actual.container) is datetime.datetime)
+        self._assert_datetime_with_microsecond_and_utc_offset(actual.container)
+
+    def _assert_datetime_with_microsecond_and_utc_offset(self, actual):
+        self._assert_naive_datetime_with_microsecond(actual)
+        self._assert_utc_offset_is_right(actual)
+
+    def test_basic_date_with_extended_time_with_microsecond_and_extended_utc_offset(self):
+        self._d[Container.CONTAINER_FIELD_NAME] = "{}T{}.{}{}".format(
+            self.BASIC_DATE,
+            self.EXTENDED_TIME,
+            self.MICROSECOND,
+            self.EXTENDED_UTC_OFFSET
+        )
+        actual = Deserializer.from_json_dict(self._d)
+
+        self.assertTrue(type(actual.container) is datetime.datetime)
+        self._assert_datetime_with_microsecond_and_utc_offset(actual.container)
+
+    def test_extended_date_with_extended_time_without_second_and_with_extended_utc_offset(self):
+        self._d[Container.CONTAINER_FIELD_NAME] = "{}T{}{}".format(
+            self.EXTENDED_DATE,
+            self.EXTENDED_TIME_WITHOUT_SECOND,
+            self.EXTENDED_UTC_OFFSET
+        )
+        actual = Deserializer.from_json_dict(self._d)
+
+        self.assertTrue(type(actual.container) is datetime.datetime)
+        self._assert_datetime_with_utc_offset_and_without_second(actual.container)
+
+    def _assert_datetime_with_utc_offset_and_without_second(self, actual):
+        self._assert_naive_datetime_without_second(actual)
+        self._assert_utc_offset_is_right(actual)
+
+    def test_basic_date_with_extended_time_without_second_and_with_extended_utc_offset(self):
+        self._d[Container.CONTAINER_FIELD_NAME] = "{}T{}{}".format(
+            self.BASIC_DATE,
+            self.EXTENDED_TIME_WITHOUT_SECOND,
+            self.EXTENDED_UTC_OFFSET
+        )
+        actual = Deserializer.from_json_dict(self._d)
+
+        self.assertTrue(type(actual.container) is datetime.datetime)
+        self._assert_datetime_with_utc_offset_and_without_second(actual.container)
+
+    def test_extended_date_with_time_with_only_hour_and_extended_utc_offset(self):
+        self._d[Container.CONTAINER_FIELD_NAME] = "{}T{}{}".format(
+            self.EXTENDED_DATE,
+            self.TIME_ONLY_HOUR,
+            self.EXTENDED_UTC_OFFSET
+        )
+        actual = Deserializer.from_json_dict(self._d)
+
+        self.assertTrue(type(actual.container) is datetime.datetime)
+        self._assert_datetime_with_only_hour_and_utc_offset(actual.container)
+
+    def _assert_datetime_with_only_hour_and_utc_offset(self, actual):
+        self._assert_naive_datetime_with_only_hour(actual)
+        self._assert_utc_offset_is_right(actual)
+
+    def test_basic_date_with_time_with_only_hour_and_extended_utc_offset(self):
+        self._d[Container.CONTAINER_FIELD_NAME] = "{}T{}{}".format(
+            self.BASIC_DATE,
+            self.TIME_ONLY_HOUR,
+            self.EXTENDED_UTC_OFFSET
+        )
+        actual = Deserializer.from_json_dict(self._d)
+
+        self.assertTrue(type(actual.container) is datetime.datetime)
+        self._assert_datetime_with_only_hour_and_utc_offset(actual.container)
+
+    def test_extended_date_with_basic_time_and_extended_utc_offset(self):
+        self._d[Container.CONTAINER_FIELD_NAME] = "{}T{}{}".format(
+            self.EXTENDED_DATE,
+            self.BASIC_TIME,
+            self.EXTENDED_UTC_OFFSET
+        )
+        actual = Deserializer.from_json_dict(self._d)
+
+        self.assertTrue(type(actual.container) is datetime.datetime)
+        self._assert_datetime_with_utc_offset(actual.container)
+
+    def test_basic_date_with_basic_time_and_extended_utc_offset(self):
+        self._d[Container.CONTAINER_FIELD_NAME] = "{}T{}{}".format(
+            self.BASIC_DATE,
+            self.BASIC_TIME,
+            self.EXTENDED_UTC_OFFSET
+        )
+        actual = Deserializer.from_json_dict(self._d)
+
+        self.assertTrue(type(actual.container) is datetime.datetime)
+        self._assert_datetime_with_utc_offset(actual.container)
+
+    def test_extended_date_with_basic_time_with_microsecond_and_extended_utc_offset(self):
+        self._d[Container.CONTAINER_FIELD_NAME] = "{}T{}.{}{}".format(
+            self.EXTENDED_DATE,
+            self.BASIC_TIME,
+            self.MICROSECOND,
+            self.EXTENDED_UTC_OFFSET
+        )
+        actual = Deserializer.from_json_dict(self._d)
+
+        self.assertTrue(type(actual.container) is datetime.datetime)
+        self._assert_datetime_with_microsecond_and_utc_offset(actual.container)
+
+    def test_basic_date_with_basic_time_with_microsecond_and_extended_utc_offset(self):
+        self._d[Container.CONTAINER_FIELD_NAME] = "{}T{}.{}{}".format(
+            self.BASIC_DATE,
+            self.BASIC_TIME,
+            self.MICROSECOND,
+            self.EXTENDED_UTC_OFFSET
+        )
+        actual = Deserializer.from_json_dict(self._d)
+
+        self.assertTrue(type(actual.container) is datetime.datetime)
+        self._assert_datetime_with_microsecond_and_utc_offset(actual.container)
+
+    def test_extended_date_with_basic_time_without_second_and_extended_utc_offset(self):
+        self._d[Container.CONTAINER_FIELD_NAME] = "{}T{}{}".format(
+            self.EXTENDED_DATE,
+            self.BASIC_TIME_WITHOUT_SECOND,
+            self.EXTENDED_UTC_OFFSET
+        )
+        actual = Deserializer.from_json_dict(self._d)
+
+        self.assertTrue(type(actual.container) is datetime.datetime)
+        self._assert_datetime_with_utc_offset_and_without_second(actual.container)
+
+    def test_basic_date_with_basic_time_without_second_and_extended_utc_offset(self):
+        self._d[Container.CONTAINER_FIELD_NAME] = "{}T{}{}".format(
+            self.BASIC_DATE,
+            self.BASIC_TIME_WITHOUT_SECOND,
+            self.EXTENDED_UTC_OFFSET
+        )
+        actual = Deserializer.from_json_dict(self._d)
+
+        self.assertTrue(type(actual.container) is datetime.datetime)
+        self._assert_datetime_with_utc_offset_and_without_second(actual.container)
+
+    def test_extended_date_with_basic_time_and_basic_utc_offset(self):
+        self._d[Container.CONTAINER_FIELD_NAME] = "{}T{}{}".format(
+            self.EXTENDED_DATE,
+            self.BASIC_TIME,
+            self.BASIC_UTC_OFFSET
+        )
+        actual = Deserializer.from_json_dict(self._d)
+
+        self.assertTrue(type(actual.container) is datetime.datetime)
+        self._assert_datetime_with_utc_offset(actual.container)
+
+    def test_basic_date_with_basic_time_and_basic_utc_offset(self):
+        self._d[Container.CONTAINER_FIELD_NAME] = "{}T{}{}".format(
+            self.BASIC_DATE,
+            self.BASIC_TIME,
+            self.BASIC_UTC_OFFSET
+        )
+        actual = Deserializer.from_json_dict(self._d)
+
+        self.assertTrue(type(actual.container) is datetime.datetime)
+        self._assert_datetime_with_utc_offset(actual.container)
+
+    def test_extended_date_with_basic_time_with_microsecond_and_basic_utc_offset(self):
+        self._d[Container.CONTAINER_FIELD_NAME] = "{}T{}.{}{}".format(
+            self.EXTENDED_DATE,
+            self.BASIC_TIME,
+            self.MICROSECOND,
+            self.BASIC_UTC_OFFSET
+        )
+        actual = Deserializer.from_json_dict(self._d)
+
+        self.assertTrue(type(actual.container) is datetime.datetime)
+        self._assert_datetime_with_microsecond_and_utc_offset(actual.container)
+
+    def test_basic_date_with_basic_time_with_microsecond_and_basic_utc_offset(self):
+        self._d[Container.CONTAINER_FIELD_NAME] = "{}T{}.{}{}".format(
+            self.BASIC_DATE,
+            self.BASIC_TIME,
+            self.MICROSECOND,
+            self.BASIC_UTC_OFFSET
+        )
+        actual = Deserializer.from_json_dict(self._d)
+
+        self.assertTrue(type(actual.container) is datetime.datetime)
+        self._assert_datetime_with_microsecond_and_utc_offset(actual.container)
+
+    def test_extended_date_with_basic_time_without_second_and_basic_utc_offset(self):
+        self._d[Container.CONTAINER_FIELD_NAME] = "{}T{}{}".format(
+            self.EXTENDED_DATE,
+            self.BASIC_TIME_WITHOUT_SECOND,
+            self.BASIC_UTC_OFFSET
+        )
+        actual = Deserializer.from_json_dict(self._d)
+
+        self.assertTrue(type(actual.container) is datetime.datetime)
+        self._assert_datetime_with_utc_offset_and_without_second(actual.container)
+
+    def test_basic_date_with_basic_time_without_second_and_basic_utc_offset(self):
+        self._d[Container.CONTAINER_FIELD_NAME] = "{}T{}{}".format(
+            self.BASIC_DATE,
+            self.BASIC_TIME_WITHOUT_SECOND,
+            self.BASIC_UTC_OFFSET
+        )
+        actual = Deserializer.from_json_dict(self._d)
+
+        self.assertTrue(type(actual.container) is datetime.datetime)
+        self._assert_datetime_with_utc_offset_and_without_second(actual.container)
+
+    def test_extended_date_with_time_with_only_hour_and_basic_utc_offset(self):
+        self._d[Container.CONTAINER_FIELD_NAME] = "{}T{}{}".format(
+            self.EXTENDED_DATE,
+            self.TIME_ONLY_HOUR,
+            self.BASIC_UTC_OFFSET
+        )
+        actual = Deserializer.from_json_dict(self._d)
+
+        self.assertTrue(type(actual.container) is datetime.datetime)
+        self._assert_datetime_with_only_hour_and_utc_offset(actual.container)
+
+    def test_basic_date_with_time_with_only_hour_and_basic_utc_offset(self):
+        self._d[Container.CONTAINER_FIELD_NAME] = "{}T{}{}".format(
+            self.BASIC_DATE,
+            self.TIME_ONLY_HOUR,
+            self.BASIC_UTC_OFFSET
+        )
+        actual = Deserializer.from_json_dict(self._d)
+
+        self.assertTrue(type(actual.container) is datetime.datetime)
+        self._assert_datetime_with_only_hour_and_utc_offset(actual.container)
+
+    def test_extended_date_with_extended_time_and_basic_utc_offset(self):
+        self._d[Container.CONTAINER_FIELD_NAME] = "{}T{}{}".format(
+            self.EXTENDED_DATE,
+            self.EXTENDED_TIME,
+            self.BASIC_UTC_OFFSET
+        )
+        actual = Deserializer.from_json_dict(self._d)
+
+        self.assertTrue(type(actual.container) is datetime.datetime)
+        self._assert_datetime_with_utc_offset(actual.container)
+
+    def test_basic_date_with_extended_time_and_basic_utc_offset(self):
+        self._d[Container.CONTAINER_FIELD_NAME] = "{}T{}{}".format(
+            self.BASIC_DATE,
+            self.EXTENDED_TIME,
+            self.BASIC_UTC_OFFSET
+        )
+        actual = Deserializer.from_json_dict(self._d)
+
+        self.assertTrue(type(actual.container) is datetime.datetime)
+        self._assert_datetime_with_utc_offset(actual.container)
+
+    def test_extended_date_with_extended_time_with_microsecond_and_basic_utc_offset(self):
+        self._d[Container.CONTAINER_FIELD_NAME] = "{}T{}.{}{}".format(
+            self.EXTENDED_DATE,
+            self.EXTENDED_TIME,
+            self.MICROSECOND,
+            self.BASIC_UTC_OFFSET
+        )
+        actual = Deserializer.from_json_dict(self._d)
+
+        self.assertTrue(type(actual.container) is datetime.datetime)
+        self._assert_datetime_with_microsecond_and_utc_offset(actual.container)
+
+    def test_basic_date_with_extended_time_with_microsecond_and_basic_utc_offset(self):
+        self._d[Container.CONTAINER_FIELD_NAME] = "{}T{}.{}{}".format(
+            self.BASIC_DATE,
+            self.EXTENDED_TIME,
+            self.MICROSECOND,
+            self.BASIC_UTC_OFFSET
+        )
+        actual = Deserializer.from_json_dict(self._d)
+
+        self.assertTrue(type(actual.container) is datetime.datetime)
+        self._assert_datetime_with_microsecond_and_utc_offset(actual.container)
+
+    def test_extended_date_with_extended_time_without_second_and_basic_utc_offset(self):
+        self._d[Container.CONTAINER_FIELD_NAME] = "{}T{}{}".format(
+            self.EXTENDED_DATE,
+            self.EXTENDED_TIME_WITHOUT_SECOND,
+            self.BASIC_UTC_OFFSET
+        )
+        actual = Deserializer.from_json_dict(self._d)
+
+        self.assertTrue(type(actual.container) is datetime.datetime)
+        self._assert_datetime_with_utc_offset_and_without_second(actual.container)
+
+    def test_basic_date_with_extended_time_without_second_and_basic_utc_offset(self):
+        self._d[Container.CONTAINER_FIELD_NAME] = "{}T{}{}".format(
+            self.BASIC_DATE,
+            self.EXTENDED_TIME_WITHOUT_SECOND,
+            self.BASIC_UTC_OFFSET
+        )
+        actual = Deserializer.from_json_dict(self._d)
+
+        self.assertTrue(type(actual.container) is datetime.datetime)
+        self._assert_datetime_with_utc_offset_and_without_second(actual.container)
+
+    def test_extended_date_with_extended_time_and_utc_offset_with_only_hour(self):
+        self._d[Container.CONTAINER_FIELD_NAME] = "{}T{}{}".format(
+            self.EXTENDED_DATE,
+            self.EXTENDED_TIME,
+            self.UTC_OFFSET_ONLY_HOUR
+        )
+        actual = Deserializer.from_json_dict(self._d)
+
+        self.assertTrue(type(actual.container) is datetime.datetime)
+        self._assert_datetime_with_utc_offset(actual.container)
+
+    def test_basic_date_with_extended_time_and_utc_offset_with_only_hour(self):
+        self._d[Container.CONTAINER_FIELD_NAME] = "{}T{}{}".format(
+            self.BASIC_DATE,
+            self.EXTENDED_TIME,
+            self.UTC_OFFSET_ONLY_HOUR
+        )
+        actual = Deserializer.from_json_dict(self._d)
+
+        self.assertTrue(type(actual.container) is datetime.datetime)
+        self._assert_datetime_with_utc_offset(actual.container)
+
+    def test_extended_date_with_extended_time_with_microsecond_and_utc_offset_with_only_hour(self):
+        self._d[Container.CONTAINER_FIELD_NAME] = "{}T{}.{}{}".format(
+            self.EXTENDED_DATE,
+            self.EXTENDED_TIME,
+            self.MICROSECOND,
+            self.UTC_OFFSET_ONLY_HOUR
+        )
+        actual = Deserializer.from_json_dict(self._d)
+
+        self.assertTrue(type(actual.container) is datetime.datetime)
+        self._assert_datetime_with_microsecond_and_utc_offset(actual.container)
+
+    def test_basic_date_with_extended_time_with_microsecond_and_utc_offset_with_only_hour(self):
+        self._d[Container.CONTAINER_FIELD_NAME] = "{}T{}.{}{}".format(
+            self.BASIC_DATE,
+            self.EXTENDED_TIME,
+            self.MICROSECOND,
+            self.UTC_OFFSET_ONLY_HOUR
+        )
+        actual = Deserializer.from_json_dict(self._d)
+
+        self.assertTrue(type(actual.container) is datetime.datetime)
+        self._assert_datetime_with_microsecond_and_utc_offset(actual.container)
+
+    def test_extended_date_with_extended_time_without_second_and_utc_offset_with_only_hour(self):
+        self._d[Container.CONTAINER_FIELD_NAME] = "{}T{}{}".format(
+            self.EXTENDED_DATE,
+            self.EXTENDED_TIME_WITHOUT_SECOND,
+            self.UTC_OFFSET_ONLY_HOUR
+        )
+        actual = Deserializer.from_json_dict(self._d)
+
+        self.assertTrue(type(actual.container) is datetime.datetime)
+        self._assert_datetime_with_utc_offset_and_without_second(actual.container)
+
+    def test_basic_date_with_extended_time_without_second_and_utc_offset_with_only_hour(self):
+        self._d[Container.CONTAINER_FIELD_NAME] = "{}T{}{}".format(
+            self.BASIC_DATE,
+            self.EXTENDED_TIME_WITHOUT_SECOND,
+            self.UTC_OFFSET_ONLY_HOUR
+        )
+        actual = Deserializer.from_json_dict(self._d)
+
+        self.assertTrue(type(actual.container) is datetime.datetime)
+        self._assert_datetime_with_utc_offset_and_without_second(actual.container)
+
+    def test_extended_date_with_time_with_only_hour_and_utc_offset_with_only_hour(self):
+        self._d[Container.CONTAINER_FIELD_NAME] = "{}T{}{}".format(
+            self.EXTENDED_DATE,
+            self.TIME_ONLY_HOUR,
+            self.UTC_OFFSET_ONLY_HOUR
+        )
+        actual = Deserializer.from_json_dict(self._d)
+
+        self.assertTrue(type(actual.container) is datetime.datetime)
+        self._assert_datetime_with_only_hour_and_utc_offset(actual.container)
+
+    def test_basic_date_with_time_with_only_hour_and_utc_offset_with_only_hour(self):
+        self._d[Container.CONTAINER_FIELD_NAME] = "{}T{}{}".format(
+            self.BASIC_DATE,
+            self.TIME_ONLY_HOUR,
+            self.UTC_OFFSET_ONLY_HOUR
+        )
+        actual = Deserializer.from_json_dict(self._d)
+
+        self.assertTrue(type(actual.container) is datetime.datetime)
+        self._assert_datetime_with_only_hour_and_utc_offset(actual.container)
+
+    def test_extended_date_with_basic_time_and_utc_offset_with_only_hour(self):
+        self._d[Container.CONTAINER_FIELD_NAME] = "{}T{}{}".format(
+            self.EXTENDED_DATE,
+            self.BASIC_TIME,
+            self.UTC_OFFSET_ONLY_HOUR
+        )
+        actual = Deserializer.from_json_dict(self._d)
+
+        self.assertTrue(type(actual.container) is datetime.datetime)
+        self._assert_datetime_with_utc_offset(actual.container)
+
+    def test_basic_date_with_basic_time_and_utc_offset_with_only_hour(self):
+        self._d[Container.CONTAINER_FIELD_NAME] = "{}T{}{}".format(
+            self.BASIC_DATE,
+            self.BASIC_TIME,
+            self.UTC_OFFSET_ONLY_HOUR
+        )
+        actual = Deserializer.from_json_dict(self._d)
+
+        self.assertTrue(type(actual.container) is datetime.datetime)
+        self._assert_datetime_with_utc_offset(actual.container)
+
+    def test_extended_date_with_basic_time_with_microsecond_and_utc_offset_with_only_hour(self):
+        self._d[Container.CONTAINER_FIELD_NAME] = "{}T{}.{}{}".format(
+            self.EXTENDED_DATE,
+            self.BASIC_TIME,
+            self.MICROSECOND,
+            self.UTC_OFFSET_ONLY_HOUR
+        )
+        actual = Deserializer.from_json_dict(self._d)
+
+        self.assertTrue(type(actual.container) is datetime.datetime)
+        self._assert_datetime_with_microsecond_and_utc_offset(actual.container)
+
+    def test_basic_date_with_basic_time_with_microsecond_and_utc_offset_with_only_hour(self):
+        self._d[Container.CONTAINER_FIELD_NAME] = "{}T{}.{}{}".format(
+            self.BASIC_DATE,
+            self.BASIC_TIME,
+            self.MICROSECOND,
+            self.UTC_OFFSET_ONLY_HOUR
+        )
+        actual = Deserializer.from_json_dict(self._d)
+
+        self.assertTrue(type(actual.container) is datetime.datetime)
+        self._assert_datetime_with_microsecond_and_utc_offset(actual.container)
+
+    def test_extended_date_with_basic_time_without_second_and_utc_offset_with_only_hour(self):
+        self._d[Container.CONTAINER_FIELD_NAME] = "{}T{}{}".format(
+            self.EXTENDED_DATE,
+            self.BASIC_TIME_WITHOUT_SECOND,
+            self.UTC_OFFSET_ONLY_HOUR
+        )
+        actual = Deserializer.from_json_dict(self._d)
+
+        self.assertTrue(type(actual.container) is datetime.datetime)
+        self._assert_datetime_with_utc_offset_and_without_second(actual.container)
+
+    def test_basic_date_with_basic_time_without_second_and_utc_offset_with_only_hour(self):
+        self._d[Container.CONTAINER_FIELD_NAME] = "{}T{}{}".format(
+            self.BASIC_DATE,
+            self.BASIC_TIME_WITHOUT_SECOND,
+            self.UTC_OFFSET_ONLY_HOUR
+        )
+        actual = Deserializer.from_json_dict(self._d)
+
+        self.assertTrue(type(actual.container) is datetime.datetime)
+        self._assert_datetime_with_utc_offset_and_without_second(actual.container)

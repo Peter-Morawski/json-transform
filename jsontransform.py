@@ -10,19 +10,21 @@ from decorator import decorator
 from dateutil import parser
 
 __author__ = "Peter Morawski"
-__version__ = "0.3.0"
+__version__ = "0.3.1"
 
 DATE_FORMAT = "%Y-%m-%d"
 DATETIME_TZ_FORMAT = "%Y-%m-%dT%H:%M:%S%z"
 DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 
-_DATE_FORMAT_REGEX = r"^[0-9]{4}-[0-9]{1,}-[0-9]{1,}$"
+_DATE_FORMAT_REGEX = r"^([0-9]{4}-[0-9]{1,2}-[0-9]{1,2}|[0-9]{8})$"
 _DATETIME_FORMAT_REGEX = r"^([0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]{8})T([0-9]{2}(:[0-9]{2})?(:[0-9]{2})?|[0-9]{6}|[0-9]{4}" \
-                         r")(\.[0-9]{2,3})?(Z|((\+|-)[0-9]{2}:?([0-9]{2})?))$"
+                         r")(\.[0-9]{3})?(Z|((\+|-)[0-9]{2}:?([0-9]{2})?))$"
 
 _JSON_FIELD_NAME = "_json_field_name"
 _JSON_FIELD_REQUIRED = "_json_field_required"
 _JSON_FIELD_NULLABLE = "_json_field_nullable"
+
+_PY2 = 2
 
 
 class ConfigurationError(Exception):
@@ -279,7 +281,7 @@ class _JsonCommon(object):
             type(value) is bool
         )
 
-        if not result and sys.version_info.major == 2:
+        if not result and sys.version_info.major == _PY2:
             result = type(value) is unicode
 
         return result
@@ -292,7 +294,7 @@ class _JsonCommon(object):
         :param value: The value which should be checked.
         :return: `True` if the value is iterable and **NOT** an `str` or `unicode`; `False` otherwise.
         """
-        if sys.version_info.major == 2:
+        if sys.version_info.major == _PY2:
             if type(value) is unicode:
                 return False
 
@@ -357,9 +359,9 @@ class _JsonDeserialization(object):
         if normalized_value is None:
             return normalized_value
         elif _JsonCommon.value_is_simple_type(normalized_value):
-            if type(normalized_value) is str or sys.version_info.major == 2 and type(normalized_value) is unicode:
+            if type(normalized_value) is str or sys.version_info.major == _PY2 and type(normalized_value) is unicode:
                 if re.match(_DATE_FORMAT_REGEX, normalized_value):
-                    return datetime.datetime.strptime(normalized_value, DATE_FORMAT).date()
+                    return parser.isoparse(normalized_value).date()
                 elif re.match(_DATETIME_FORMAT_REGEX, normalized_value):
                     return parser.isoparse(normalized_value)
 
@@ -421,6 +423,7 @@ class _JsonDeserialization(object):
         Check if all required fields of a :class:`JsonObject` are satisfied.
 
         :param json_object: The JsonObject which should be checked.
+        :param json_dict: The `dict` which represents a `JsonObject` which should be validated.
         :raises FieldValidationError: When a required field is missing.
         """
         required_field_names = []
