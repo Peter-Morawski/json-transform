@@ -23,12 +23,10 @@ project = u'jsontransform'
 copyright = u'2018, Peter Morawski'
 author = u'Peter Morawski'
 
-from jsontransform import __version__
-
 # The short X.Y version
-version = __version__
+version = u'0.3.1'
 # The full version, including alpha/beta/rc tags
-release = __version__ + '-ALPHA'
+release = u'0.3.1-ALPHA'
 
 
 # -- General configuration ---------------------------------------------------
