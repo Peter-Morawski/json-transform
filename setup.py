@@ -3,6 +3,10 @@ import setuptools
 with open("README.md", "r") as f:
     long_description = f.read()
 
+with open("requirements.txt", "r") as f:
+    install_requirements = [line.strip().replace("\n", "") for line in f.readlines()]
+
+
 setuptools.setup(
     name="json-transform",
     version="0.4.1",
@@ -13,7 +17,7 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://bitbucket.org/Peter-Morawski/json-transform",
-    install_requires=["decorator==4.3.0", "python-dateutil"],
+    install_requires=install_requirements,
     test_suite="test_suite",
     py_modules=["jsontransform"],
     license="MIT License",

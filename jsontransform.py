@@ -1,14 +1,15 @@
 # -*- coding: utf-8 -*-
 
+import collections
+import datetime
+import inspect
+import itertools
+import json
 import re
 import sys
-import json
-import inspect
-import datetime
-import itertools
-import collections
-from decorator import decorator
+
 from dateutil import parser
+from decorator import decorator
 
 __author__ = "Peter Morawski"
 __version__ = "0.4.1"
@@ -278,14 +279,14 @@ class _JsonCommon(object):
         :return: `True` if the values type is simple; `False` otherwise.
         """
         result = (
-                type(value) is str or
-                type(value) is int or
-                type(value) is float or
-                type(value) is bool
+                isinstance(value, str) or
+                isinstance(value, int) or
+                isinstance(value, float) or
+                isinstance(value, bool)
         )
 
         if not result and sys.version_info.major == _PY2:
-            result = type(value) is unicode
+            result = isinstance(value, unicode)
 
         return result
 
@@ -298,10 +299,10 @@ class _JsonCommon(object):
         :return: `True` if the value is iterable and **NOT** an `str` or `unicode`; `False` otherwise.
         """
         if sys.version_info.major == _PY2:
-            if type(value) is unicode:
+            if isinstance(value, unicode):
                 return False
 
-        if type(value) is str:
+        if isinstance(value, str):
             return False
 
         return isinstance(value, collections.Iterable)
@@ -366,7 +367,8 @@ class _JsonDeserialization(object):
         if normalized_value is None:
             return normalized_value
         elif _JsonCommon.value_is_simple_type(normalized_value):
-            if type(normalized_value) is str or sys.version_info.major == _PY2 and type(normalized_value) is unicode:
+            if isinstance(normalized_value, str) or sys.version_info.major == _PY2 and isinstance(normalized_value,
+                                                                                                  unicode):
                 if re.match(_DATE_FORMAT_REGEX, normalized_value):
                     return parser.isoparse(normalized_value).date()
                 elif re.match(_DATETIME_FORMAT_REGEX, normalized_value):
@@ -380,7 +382,7 @@ class _JsonDeserialization(object):
                 pass
 
             return {key: cls.reverse_normalized_value(normalized_value[key]) for key in normalized_value.keys()}
-        elif type(normalized_value) is list:
+        elif isinstance(normalized_value, list):
             result = []
             for item in normalized_value:
                 result.append(cls.reverse_normalized_value(item))

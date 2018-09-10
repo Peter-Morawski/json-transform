@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 
+import datetime
 import sys
 import unittest
-import datetime
-from jsontransform import ConfigurationError, FieldValidationError, MissingObjectError, Deserializer, _PY2
-from .datastructure import ExtendedCar, Car, Container, JsonObjectWithoutFields, JsonObjectWithRequiredField, \
-    JsonObjectWithNotNullableField, ExtendedExtendedCar, IssuePriority
+
+from jsontransform import ConfigurationError, Deserializer, FieldValidationError, MissingObjectError, _PY2
+from .datastructure import Car, Container, ExtendedCar, ExtendedExtendedCar, IssuePriority, \
+    JsonObjectWithNotNullableField, JsonObjectWithRequiredField, JsonObjectWithoutFields
 
 
 class DictDeserialization(unittest.TestCase):
@@ -273,7 +274,7 @@ class DictDeserialization(unittest.TestCase):
         }
         actual = Deserializer.from_json_dict(d, Car)
 
-        assert type(actual) is Car
+        self.assertIsInstance(actual, Car)
         self.assertEqual(d[Car.FIELD_MODEL_NAME_NAME], actual.model_name)
         self.assertEqual(d[Car.FIELD_MAX_SPEED_NAME], actual.max_speed)
 
@@ -288,8 +289,8 @@ class DictDeserialization(unittest.TestCase):
         }
         actual = Deserializer.from_json_dict(d, Container)
 
-        assert type(actual.container) is dict
-        assert type(actual.container["key1"]) is Container
+        self.assertIsInstance(actual.container, dict)
+        self.assertIsInstance(actual.container["key1"], Container)
 
     def test_date_from_unicode(self):
         d = {
@@ -297,8 +298,8 @@ class DictDeserialization(unittest.TestCase):
         }
         actual = Deserializer.from_json_dict(d)
 
-        self.assertTrue(type(actual.container) is datetime.date)
-        self.assertTrue(type(actual.container) is not datetime.datetime)
+        self.assertIsInstance(actual.container, datetime.date)
+        self.assertNotIsInstance(actual.container, datetime.datetime)
 
     def test_datetime_from_unicode(self):
         d = {
@@ -306,7 +307,7 @@ class DictDeserialization(unittest.TestCase):
         }
         actual = Deserializer.from_json_dict(d)
 
-        self.assertTrue(type(actual.container) is datetime.datetime)
+        self.assertIsInstance(actual.container, datetime.datetime)
 
     def test_date_inside_list(self):
         d = {
@@ -314,8 +315,8 @@ class DictDeserialization(unittest.TestCase):
         }
         actual = Deserializer.from_json_dict(d)
 
-        self.assertTrue(type(actual.container[0]) is datetime.date)
-        self.assertTrue(type(actual.container[0]) is not datetime.datetime)
+        self.assertIsInstance(actual.container[0], datetime.date)
+        self.assertNotIsInstance(actual.container[0], datetime.datetime)
 
     def test_datetime_inside_list(self):
         d = {
@@ -323,7 +324,7 @@ class DictDeserialization(unittest.TestCase):
         }
         actual = Deserializer.from_json_dict(d)
 
-        self.assertTrue(type(actual.container[0]) is datetime.datetime)
+        self.assertIsInstance(actual.container[0], datetime.datetime)
 
 
 class DictDeserializationWithRequiredField(unittest.TestCase):
@@ -473,8 +474,8 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
         self._d[Container.CONTAINER_FIELD_NAME] = self.EXTENDED_DATE
         actual = Deserializer.from_json_dict(self._d)
 
-        self.assertTrue(type(actual.container) is datetime.date)
-        self.assertTrue(type(actual.container) is not datetime.datetime)
+        self.assertIsInstance(actual.container, datetime.date)
+        self.assertNotIsInstance(actual.container, datetime.datetime)
         self._assert_date(actual.container)
 
     def _assert_date(self, actual):
@@ -486,15 +487,15 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
         self._d[Container.CONTAINER_FIELD_NAME] = self.BASIC_DATE
         actual = Deserializer.from_json_dict(self._d)
 
-        self.assertTrue(type(actual.container) is datetime.date)
-        self.assertTrue(type(actual.container) is not datetime.datetime)
+        self.assertIsInstance(actual.container, datetime.date)
+        self.assertNotIsInstance(actual.container, datetime.datetime)
         self._assert_date(actual.container)
 
     def test_extended_naive_datetime_with_extended_time(self):
         self._d[Container.CONTAINER_FIELD_NAME] = "{}T{}Z".format(self.EXTENDED_DATE, self.EXTENDED_TIME)
         actual = Deserializer.from_json_dict(self._d)
 
-        self.assertTrue(type(actual.container) is datetime.datetime)
+        self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_naive_datetime(actual.container)
 
     def _assert_naive_datetime(self, actual):
@@ -507,21 +508,21 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
         self._d[Container.CONTAINER_FIELD_NAME] = "{}T{}Z".format(self.BASIC_DATE, self.EXTENDED_TIME)
         actual = Deserializer.from_json_dict(self._d)
 
-        self.assertTrue(type(actual.container) is datetime.datetime)
+        self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_naive_datetime(actual.container)
 
     def test_extended_naive_datetime_with_basic_time(self):
         self._d[Container.CONTAINER_FIELD_NAME] = "{}T{}Z".format(self.EXTENDED_DATE, self.BASIC_TIME)
         actual = Deserializer.from_json_dict(self._d)
 
-        self.assertTrue(type(actual.container) is datetime.datetime)
+        self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_naive_datetime(actual.container)
 
     def test_basic_naive_datetime_with_basic_time(self):
         self._d[Container.CONTAINER_FIELD_NAME] = "{}T{}Z".format(self.BASIC_DATE, self.BASIC_TIME)
         actual = Deserializer.from_json_dict(self._d)
 
-        self.assertTrue(type(actual.container) is datetime.datetime)
+        self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_naive_datetime(actual.container)
 
     def test_extended_naive_datetime_with_extended_time_with_microsecond(self):
@@ -532,7 +533,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
         )
         actual = Deserializer.from_json_dict(self._d)
 
-        self.assertTrue(type(actual.container) is datetime.datetime)
+        self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_naive_datetime_with_microsecond(actual.container)
 
     def _assert_naive_datetime_with_microsecond(self, actual):
@@ -547,7 +548,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
         )
         actual = Deserializer.from_json_dict(self._d)
 
-        self.assertTrue(type(actual.container) is datetime.datetime)
+        self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_naive_datetime_with_microsecond(actual.container)
 
     def test_extended_naive_datetime_with_basic_time_with_microsecond(self):
@@ -558,7 +559,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
         )
         actual = Deserializer.from_json_dict(self._d)
 
-        self.assertTrue(type(actual.container) is datetime.datetime)
+        self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_naive_datetime_with_microsecond(actual.container)
 
     def test_basic_naive_datetime_with_basic_time_with_microsecond(self):
@@ -569,7 +570,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
         )
         actual = Deserializer.from_json_dict(self._d)
 
-        self.assertTrue(type(actual.container) is datetime.datetime)
+        self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_naive_datetime_with_microsecond(actual.container)
 
     def test_extended_naive_datetime_with_extended_time_without_second(self):
@@ -579,7 +580,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
         )
         actual = Deserializer.from_json_dict(self._d)
 
-        self.assertTrue(type(actual.container) is datetime.datetime)
+        self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_naive_datetime_without_second(actual.container)
 
     def _assert_naive_datetime_without_second(self, actual):
@@ -595,7 +596,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
         )
         actual = Deserializer.from_json_dict(self._d)
 
-        self.assertTrue(type(actual.container) is datetime.datetime)
+        self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_naive_datetime_without_second(actual.container)
 
     def test_extended_naive_datetime_with_basic_time_without_second(self):
@@ -605,7 +606,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
         )
         actual = Deserializer.from_json_dict(self._d)
 
-        self.assertTrue(type(actual.container) is datetime.datetime)
+        self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_naive_datetime_without_second(actual.container)
 
     def test_basic_naive_datetime_with_basic_time_without_second(self):
@@ -615,14 +616,14 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
         )
         actual = Deserializer.from_json_dict(self._d)
 
-        self.assertTrue(type(actual.container) is datetime.datetime)
+        self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_naive_datetime_without_second(actual.container)
 
     def test_extended_naive_datetime_with_only_hour(self):
         self._d[Container.CONTAINER_FIELD_NAME] = "{}T{}Z".format(self.EXTENDED_DATE, self.TIME_ONLY_HOUR)
         actual = Deserializer.from_json_dict(self._d)
 
-        self.assertTrue(type(actual.container) is datetime.datetime)
+        self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_naive_datetime_with_only_hour(actual.container)
 
     def _assert_naive_datetime_with_only_hour(self, actual):
@@ -635,7 +636,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
         self._d[Container.CONTAINER_FIELD_NAME] = "{}T{}Z".format(self.BASIC_DATE, self.TIME_ONLY_HOUR)
         actual = Deserializer.from_json_dict(self._d)
 
-        self.assertTrue(type(actual.container) is datetime.datetime)
+        self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_naive_datetime_with_only_hour(actual.container)
 
     def test_extended_date_with_extended_time_and_extended_utc_offset(self):
@@ -646,7 +647,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
         )
         actual = Deserializer.from_json_dict(self._d)
 
-        self.assertTrue(type(actual.container) is datetime.datetime)
+        self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_datetime_with_utc_offset(actual.container)
 
     def _assert_datetime_with_utc_offset(self, actual):
@@ -667,7 +668,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
         )
         actual = Deserializer.from_json_dict(self._d)
 
-        self.assertTrue(type(actual.container) is datetime.datetime)
+        self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_datetime_with_utc_offset(actual.container)
 
     def test_extended_date_with_extended_time_with_microsecond_and_extended_utc_offset(self):
@@ -679,7 +680,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
         )
         actual = Deserializer.from_json_dict(self._d)
 
-        self.assertTrue(type(actual.container) is datetime.datetime)
+        self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_datetime_with_microsecond_and_utc_offset(actual.container)
 
     def _assert_datetime_with_microsecond_and_utc_offset(self, actual):
@@ -695,7 +696,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
         )
         actual = Deserializer.from_json_dict(self._d)
 
-        self.assertTrue(type(actual.container) is datetime.datetime)
+        self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_datetime_with_microsecond_and_utc_offset(actual.container)
 
     def test_extended_date_with_extended_time_without_second_and_with_extended_utc_offset(self):
@@ -706,7 +707,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
         )
         actual = Deserializer.from_json_dict(self._d)
 
-        self.assertTrue(type(actual.container) is datetime.datetime)
+        self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_datetime_with_utc_offset_and_without_second(actual.container)
 
     def _assert_datetime_with_utc_offset_and_without_second(self, actual):
@@ -721,7 +722,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
         )
         actual = Deserializer.from_json_dict(self._d)
 
-        self.assertTrue(type(actual.container) is datetime.datetime)
+        self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_datetime_with_utc_offset_and_without_second(actual.container)
 
     def test_extended_date_with_time_with_only_hour_and_extended_utc_offset(self):
@@ -732,7 +733,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
         )
         actual = Deserializer.from_json_dict(self._d)
 
-        self.assertTrue(type(actual.container) is datetime.datetime)
+        self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_datetime_with_only_hour_and_utc_offset(actual.container)
 
     def _assert_datetime_with_only_hour_and_utc_offset(self, actual):
@@ -747,7 +748,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
         )
         actual = Deserializer.from_json_dict(self._d)
 
-        self.assertTrue(type(actual.container) is datetime.datetime)
+        self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_datetime_with_only_hour_and_utc_offset(actual.container)
 
     def test_extended_date_with_basic_time_and_extended_utc_offset(self):
@@ -758,7 +759,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
         )
         actual = Deserializer.from_json_dict(self._d)
 
-        self.assertTrue(type(actual.container) is datetime.datetime)
+        self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_datetime_with_utc_offset(actual.container)
 
     def test_basic_date_with_basic_time_and_extended_utc_offset(self):
@@ -769,7 +770,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
         )
         actual = Deserializer.from_json_dict(self._d)
 
-        self.assertTrue(type(actual.container) is datetime.datetime)
+        self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_datetime_with_utc_offset(actual.container)
 
     def test_extended_date_with_basic_time_with_microsecond_and_extended_utc_offset(self):
@@ -781,7 +782,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
         )
         actual = Deserializer.from_json_dict(self._d)
 
-        self.assertTrue(type(actual.container) is datetime.datetime)
+        self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_datetime_with_microsecond_and_utc_offset(actual.container)
 
     def test_basic_date_with_basic_time_with_microsecond_and_extended_utc_offset(self):
@@ -793,7 +794,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
         )
         actual = Deserializer.from_json_dict(self._d)
 
-        self.assertTrue(type(actual.container) is datetime.datetime)
+        self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_datetime_with_microsecond_and_utc_offset(actual.container)
 
     def test_extended_date_with_basic_time_without_second_and_extended_utc_offset(self):
@@ -804,7 +805,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
         )
         actual = Deserializer.from_json_dict(self._d)
 
-        self.assertTrue(type(actual.container) is datetime.datetime)
+        self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_datetime_with_utc_offset_and_without_second(actual.container)
 
     def test_basic_date_with_basic_time_without_second_and_extended_utc_offset(self):
@@ -815,7 +816,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
         )
         actual = Deserializer.from_json_dict(self._d)
 
-        self.assertTrue(type(actual.container) is datetime.datetime)
+        self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_datetime_with_utc_offset_and_without_second(actual.container)
 
     def test_extended_date_with_basic_time_and_basic_utc_offset(self):
@@ -826,7 +827,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
         )
         actual = Deserializer.from_json_dict(self._d)
 
-        self.assertTrue(type(actual.container) is datetime.datetime)
+        self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_datetime_with_utc_offset(actual.container)
 
     def test_basic_date_with_basic_time_and_basic_utc_offset(self):
@@ -837,7 +838,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
         )
         actual = Deserializer.from_json_dict(self._d)
 
-        self.assertTrue(type(actual.container) is datetime.datetime)
+        self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_datetime_with_utc_offset(actual.container)
 
     def test_extended_date_with_basic_time_with_microsecond_and_basic_utc_offset(self):
@@ -849,7 +850,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
         )
         actual = Deserializer.from_json_dict(self._d)
 
-        self.assertTrue(type(actual.container) is datetime.datetime)
+        self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_datetime_with_microsecond_and_utc_offset(actual.container)
 
     def test_basic_date_with_basic_time_with_microsecond_and_basic_utc_offset(self):
@@ -861,7 +862,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
         )
         actual = Deserializer.from_json_dict(self._d)
 
-        self.assertTrue(type(actual.container) is datetime.datetime)
+        self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_datetime_with_microsecond_and_utc_offset(actual.container)
 
     def test_extended_date_with_basic_time_without_second_and_basic_utc_offset(self):
@@ -872,7 +873,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
         )
         actual = Deserializer.from_json_dict(self._d)
 
-        self.assertTrue(type(actual.container) is datetime.datetime)
+        self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_datetime_with_utc_offset_and_without_second(actual.container)
 
     def test_basic_date_with_basic_time_without_second_and_basic_utc_offset(self):
@@ -883,7 +884,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
         )
         actual = Deserializer.from_json_dict(self._d)
 
-        self.assertTrue(type(actual.container) is datetime.datetime)
+        self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_datetime_with_utc_offset_and_without_second(actual.container)
 
     def test_extended_date_with_time_with_only_hour_and_basic_utc_offset(self):
@@ -894,7 +895,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
         )
         actual = Deserializer.from_json_dict(self._d)
 
-        self.assertTrue(type(actual.container) is datetime.datetime)
+        self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_datetime_with_only_hour_and_utc_offset(actual.container)
 
     def test_basic_date_with_time_with_only_hour_and_basic_utc_offset(self):
@@ -905,7 +906,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
         )
         actual = Deserializer.from_json_dict(self._d)
 
-        self.assertTrue(type(actual.container) is datetime.datetime)
+        self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_datetime_with_only_hour_and_utc_offset(actual.container)
 
     def test_extended_date_with_extended_time_and_basic_utc_offset(self):
@@ -916,7 +917,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
         )
         actual = Deserializer.from_json_dict(self._d)
 
-        self.assertTrue(type(actual.container) is datetime.datetime)
+        self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_datetime_with_utc_offset(actual.container)
 
     def test_basic_date_with_extended_time_and_basic_utc_offset(self):
@@ -927,7 +928,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
         )
         actual = Deserializer.from_json_dict(self._d)
 
-        self.assertTrue(type(actual.container) is datetime.datetime)
+        self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_datetime_with_utc_offset(actual.container)
 
     def test_extended_date_with_extended_time_with_microsecond_and_basic_utc_offset(self):
@@ -939,7 +940,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
         )
         actual = Deserializer.from_json_dict(self._d)
 
-        self.assertTrue(type(actual.container) is datetime.datetime)
+        self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_datetime_with_microsecond_and_utc_offset(actual.container)
 
     def test_basic_date_with_extended_time_with_microsecond_and_basic_utc_offset(self):
@@ -951,7 +952,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
         )
         actual = Deserializer.from_json_dict(self._d)
 
-        self.assertTrue(type(actual.container) is datetime.datetime)
+        self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_datetime_with_microsecond_and_utc_offset(actual.container)
 
     def test_extended_date_with_extended_time_without_second_and_basic_utc_offset(self):
@@ -962,7 +963,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
         )
         actual = Deserializer.from_json_dict(self._d)
 
-        self.assertTrue(type(actual.container) is datetime.datetime)
+        self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_datetime_with_utc_offset_and_without_second(actual.container)
 
     def test_basic_date_with_extended_time_without_second_and_basic_utc_offset(self):
@@ -973,7 +974,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
         )
         actual = Deserializer.from_json_dict(self._d)
 
-        self.assertTrue(type(actual.container) is datetime.datetime)
+        self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_datetime_with_utc_offset_and_without_second(actual.container)
 
     def test_extended_date_with_extended_time_and_utc_offset_with_only_hour(self):
@@ -984,7 +985,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
         )
         actual = Deserializer.from_json_dict(self._d)
 
-        self.assertTrue(type(actual.container) is datetime.datetime)
+        self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_datetime_with_utc_offset(actual.container)
 
     def test_basic_date_with_extended_time_and_utc_offset_with_only_hour(self):
@@ -995,7 +996,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
         )
         actual = Deserializer.from_json_dict(self._d)
 
-        self.assertTrue(type(actual.container) is datetime.datetime)
+        self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_datetime_with_utc_offset(actual.container)
 
     def test_extended_date_with_extended_time_with_microsecond_and_utc_offset_with_only_hour(self):
@@ -1007,7 +1008,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
         )
         actual = Deserializer.from_json_dict(self._d)
 
-        self.assertTrue(type(actual.container) is datetime.datetime)
+        self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_datetime_with_microsecond_and_utc_offset(actual.container)
 
     def test_basic_date_with_extended_time_with_microsecond_and_utc_offset_with_only_hour(self):
@@ -1019,7 +1020,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
         )
         actual = Deserializer.from_json_dict(self._d)
 
-        self.assertTrue(type(actual.container) is datetime.datetime)
+        self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_datetime_with_microsecond_and_utc_offset(actual.container)
 
     def test_extended_date_with_extended_time_without_second_and_utc_offset_with_only_hour(self):
@@ -1030,7 +1031,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
         )
         actual = Deserializer.from_json_dict(self._d)
 
-        self.assertTrue(type(actual.container) is datetime.datetime)
+        self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_datetime_with_utc_offset_and_without_second(actual.container)
 
     def test_basic_date_with_extended_time_without_second_and_utc_offset_with_only_hour(self):
@@ -1041,7 +1042,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
         )
         actual = Deserializer.from_json_dict(self._d)
 
-        self.assertTrue(type(actual.container) is datetime.datetime)
+        self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_datetime_with_utc_offset_and_without_second(actual.container)
 
     def test_extended_date_with_time_with_only_hour_and_utc_offset_with_only_hour(self):
@@ -1052,7 +1053,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
         )
         actual = Deserializer.from_json_dict(self._d)
 
-        self.assertTrue(type(actual.container) is datetime.datetime)
+        self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_datetime_with_only_hour_and_utc_offset(actual.container)
 
     def test_basic_date_with_time_with_only_hour_and_utc_offset_with_only_hour(self):
@@ -1063,7 +1064,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
         )
         actual = Deserializer.from_json_dict(self._d)
 
-        self.assertTrue(type(actual.container) is datetime.datetime)
+        self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_datetime_with_only_hour_and_utc_offset(actual.container)
 
     def test_extended_date_with_basic_time_and_utc_offset_with_only_hour(self):
@@ -1074,7 +1075,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
         )
         actual = Deserializer.from_json_dict(self._d)
 
-        self.assertTrue(type(actual.container) is datetime.datetime)
+        self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_datetime_with_utc_offset(actual.container)
 
     def test_basic_date_with_basic_time_and_utc_offset_with_only_hour(self):
@@ -1085,7 +1086,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
         )
         actual = Deserializer.from_json_dict(self._d)
 
-        self.assertTrue(type(actual.container) is datetime.datetime)
+        self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_datetime_with_utc_offset(actual.container)
 
     def test_extended_date_with_basic_time_with_microsecond_and_utc_offset_with_only_hour(self):
@@ -1097,7 +1098,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
         )
         actual = Deserializer.from_json_dict(self._d)
 
-        self.assertTrue(type(actual.container) is datetime.datetime)
+        self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_datetime_with_microsecond_and_utc_offset(actual.container)
 
     def test_basic_date_with_basic_time_with_microsecond_and_utc_offset_with_only_hour(self):
@@ -1109,7 +1110,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
         )
         actual = Deserializer.from_json_dict(self._d)
 
-        self.assertTrue(type(actual.container) is datetime.datetime)
+        self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_datetime_with_microsecond_and_utc_offset(actual.container)
 
     def test_extended_date_with_basic_time_without_second_and_utc_offset_with_only_hour(self):
@@ -1120,7 +1121,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
         )
         actual = Deserializer.from_json_dict(self._d)
 
-        self.assertTrue(type(actual.container) is datetime.datetime)
+        self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_datetime_with_utc_offset_and_without_second(actual.container)
 
     def test_basic_date_with_basic_time_without_second_and_utc_offset_with_only_hour(self):
@@ -1131,5 +1132,5 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
         )
         actual = Deserializer.from_json_dict(self._d)
 
-        self.assertTrue(type(actual.container) is datetime.datetime)
+        self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_datetime_with_utc_offset_and_without_second(actual.container)
