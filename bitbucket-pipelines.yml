@@ -35,3 +35,13 @@ pipelines:
           - pip install -r requirements.txt
           - pip install -r tests/requirements.txt
           - python test_suite.py
+    - step:
+        name: Generate Coverage Report
+        image: python:2.7
+        script:
+        - pip install -r requirements.txt
+        - pip install -r tests/requirements.txt
+        - pip install coverage codacy-coverage
+        - coverage xml jsontransform.py
+        - export CODACY_PROJECT_TOKEN=4050f54ae9394504993c945f16dd9074
+        - python-codacy-coverage -r coverage.xml
