@@ -1,5 +1,11 @@
 # History
 
+## 0.4.1 (2018-09-10)
+
+* fixed wrong object match when searching for the most matching `JsonObject` while deserializing and there were multiple
+objects that had the same number of matching occurrences - then the `JsonObject` with the exact same amount of
+fields as the `dict` should be taken
+
 ## 0.4.0 (2018-09-08)
 
 * added the name of the object to the `FieldValidationError` which is thrown in the `validate_if_required_fields_satisfied`

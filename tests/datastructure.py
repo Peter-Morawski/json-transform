@@ -180,3 +180,101 @@ class JsonObjectWithNotNullableField(JsonObject):
     @not_nullable.setter
     def not_nullable(self, value):
         self._not_nullable = value
+
+
+class IssueType(JsonObject):
+    ID_NAME = "id"
+    DESCRIPTION_NAME = "description"
+    ICON_URL = "iconUrl"
+    NAME_NAME = "name"
+    SUB_TASK_NAME = "subTask"
+
+    def __init__(self):
+        self._id = u""
+        self._description = u""
+        self._icon_url = u""
+        self._name = u""
+        self._sub_task = False
+
+    @property
+    @field(ID_NAME, required=True, nullable=False)
+    def id(self):
+        return self._id
+
+    @id.setter
+    def id(self, value):
+        self._id = value
+
+    @property
+    @field(DESCRIPTION_NAME, required=True, nullable=False)
+    def description(self):
+        return self._description
+
+    @description.setter
+    def description(self, value):
+        self._description = value
+
+    @property
+    @field(ICON_URL, required=True, nullable=False)
+    def icon_url(self):
+        return self._icon_url
+
+    @icon_url.setter
+    def icon_url(self, value):
+        self._icon_url = value
+
+    @property
+    @field(NAME_NAME, required=True, nullable=False)
+    def name(self):
+        return self._name
+
+    @name.setter
+    def name(self, value):
+        self._name = value
+
+    @property
+    @field(SUB_TASK_NAME, required=True, nullable=False)
+    def sub_task(self):
+        return self._sub_task
+
+    @sub_task.setter
+    def sub_task(self, value):
+        self._sub_task = value
+
+
+class IssuePriority(JsonObject):
+    ID_NAME = "name"
+    ICON_URL_NAME = "iconUrl"
+    NAME_NAME = "name"
+
+    def __init__(self):
+        self._id = u""
+        self._icon_url = u""
+        self._name = u""
+
+    @property
+    @field(ID_NAME, required=True, nullable=False)
+    def id(self):
+        return self._id
+
+    @id.setter
+    def id(self, value):
+        self._id = value
+
+    @property
+    @field(ICON_URL_NAME, required=True, nullable=False)
+    def icon_url(self):
+        return self._icon_url
+
+    @icon_url.setter
+    def icon_url(self, value):
+        self._icon_url = value
+
+    @property
+    @field(NAME_NAME, required=True, nullable=False)
+    def name(self):
+        return self._name
+
+    @name.setter
+    def name(self, value):
+        self._name = value

@@ -5,11 +5,11 @@ with open("README.md", "r") as f:
 
 setuptools.setup(
     name="json-transform",
-    version="0.4.0",
+    version="0.4.1",
     author="Peter Morawski",
     author_email="contact@peter-morawski.de",
-    keywords="json serializing deserializing through python objects",
-    description="Allows to serialize python classes into JSON objects and deserialize JSON objects into python classes",
+    keywords="convert python object json",
+    description="Convert python objects to JSON objects and vice versa.",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://bitbucket.org/Peter-Morawski/json-transform",

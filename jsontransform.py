@@ -5,12 +5,13 @@ import sys
 import json
 import inspect
 import datetime
+import itertools
 import collections
 from decorator import decorator
 from dateutil import parser
 
 __author__ = "Peter Morawski"
-__version__ = "0.4.0"
+__version__ = "0.4.1"
 
 DATE_FORMAT = "%Y-%m-%d"
 DATETIME_TZ_FORMAT = "%Y-%m-%dT%H:%M:%S%z"
@@ -102,6 +103,7 @@ class Serializer(object):
     * a file-like object
     * a `dict`
     """
+
     @classmethod
     def to_json_string(cls, json_object):
         """
@@ -163,6 +165,7 @@ class Deserializer(object):
     * a file-like object
     * a `dict`
     """
+
     @classmethod
     def from_json_string(cls, json_string, target=None):
         """
@@ -275,10 +278,10 @@ class _JsonCommon(object):
         :return: `True` if the values type is simple; `False` otherwise.
         """
         result = (
-            type(value) is str or
-            type(value) is int or
-            type(value) is float or
-            type(value) is bool
+                type(value) is str or
+                type(value) is int or
+                type(value) is float or
+                type(value) is bool
         )
 
         if not result and sys.version_info.major == _PY2:
@@ -346,6 +349,7 @@ class _JsonSerialization(object):
 class _JsonDeserialization(object):
     _KEY_OCCURRENCES = "occurrences"
     _KEY_OBJECT = "object"
+    _KEY_PROPERTIES_AMOUNT = "properties_amount"
 
     @classmethod
     def reverse_normalized_value(cls, normalized_value):
@@ -395,15 +399,25 @@ class _JsonDeserialization(object):
         :raises MissingObjectError: When no matching `JsonObject` could ne found.
         :return: The `JsonObject` which matched the most with the given `dict`.
         """
-        matching_objects = cls._search_matching_json_object(json_dict, JsonObject)
+        matching_objects = cls._search_matching_json_objects(json_dict, JsonObject)
 
         if matching_objects:
-            return sorted(matching_objects, key=lambda x: x[cls._KEY_OCCURRENCES], reverse=True)[0][cls._KEY_OBJECT]
+            matching_objects = sorted(matching_objects, key=lambda x: x[cls._KEY_OCCURRENCES], reverse=True)
+            most_matching_objects = [
+                item for item in next(itertools.groupby(matching_objects, lambda x: x[cls._KEY_OCCURRENCES]))[1]
+            ]
+
+            # search if there is an object which has the exact same amount of properties as the passed dict
+            for match in most_matching_objects:
+                if match[cls._KEY_PROPERTIES_AMOUNT] == len(json_dict.keys()):
+                    return match[cls._KEY_OBJECT]
+
+            return most_matching_objects[0][cls._KEY_OBJECT]
 
         raise MissingObjectError("No matching JsonObject could be found")
 
     @classmethod
-    def _search_matching_json_object(cls, json_dict, json_object):
+    def _search_matching_json_objects(cls, json_dict, json_object):
         matching_objects = []
 
         for obj in json_object.__subclasses__():
@@ -419,10 +433,11 @@ class _JsonDeserialization(object):
             if occurrences:
                 matching_objects.append({
                     cls._KEY_OCCURRENCES: occurrences,
-                    cls._KEY_OBJECT: obj
+                    cls._KEY_OBJECT: obj,
+                    cls._KEY_PROPERTIES_AMOUNT: len(properties.keys())
                 })
 
-            matching_sub_objects = cls._search_matching_json_object(json_dict, obj)
+            matching_sub_objects = cls._search_matching_json_objects(json_dict, obj)
             for match in matching_sub_objects:
                 matching_objects.append(match)
 
@@ -545,4 +560,3 @@ class _JsonValidation(object):
         elif isinstance(value, JsonObject):
             properties = _JsonCommon.get_decorated_properties(value)
             cls._validate_not_nullable_fields(value, properties)
-

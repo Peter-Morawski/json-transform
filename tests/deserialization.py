@@ -5,7 +5,7 @@ import unittest
 import datetime
 from jsontransform import ConfigurationError, FieldValidationError, MissingObjectError, Deserializer, _PY2
 from .datastructure import ExtendedCar, Car, Container, JsonObjectWithoutFields, JsonObjectWithRequiredField, \
-    JsonObjectWithNotNullableField, ExtendedExtendedCar
+    JsonObjectWithNotNullableField, ExtendedExtendedCar, IssuePriority
 
 
 class DictDeserialization(unittest.TestCase):
@@ -56,6 +56,16 @@ class DictDeserialization(unittest.TestCase):
         actual = Deserializer.from_json_dict(d)
 
         self.assertTrue(type(actual) is ExtendedExtendedCar)
+
+    def test_automatic_target_object_recognition_with_two_objects_where_one_has_the_same_but_more_fields(self):
+        d = {
+            IssuePriority.NAME_NAME: u"critical",
+            IssuePriority.ID_NAME: u"1",
+            IssuePriority.ICON_URL_NAME: u"http://www.some-domain.com/some/path/icon.png"
+        }
+        actual = Deserializer.from_json_dict(d)
+
+        self.assertTrue(type(actual) is IssuePriority)
 
     # noinspection PyMethodMayBeStatic
     def test_if_dict_is_casted_into_json_object(self):
