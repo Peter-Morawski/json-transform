@@ -343,7 +343,7 @@ class DictSerialization(unittest.TestCase):
         expected = [list(item) for item in self._container.container]
         for lst in expected:
             for i, item in enumerate(lst):
-                if type(item) is Container:
+                if isinstance(item, Container):
                     lst[i] = Serializer.to_json_dict(lst[i])
 
         self.assertListEqual(expected, actual[Container.CONTAINER_FIELD_NAME])
@@ -470,7 +470,7 @@ class DictSerialization(unittest.TestCase):
         actual = Serializer.to_json_dict(self._container)
 
         for key, value in actual[Container.CONTAINER_FIELD_NAME].items():
-            assert value is None
+            self.assertEqual(value, None)
 
         self.assertDictEqual(self._container.container, actual[Container.CONTAINER_FIELD_NAME])
 
@@ -879,7 +879,7 @@ class DictSerializationWithTimes(unittest.TestCase):
         }
         self.assertDictEqual(expected, actual[Container.CONTAINER_FIELD_NAME])
         for key in actual[Container.CONTAINER_FIELD_NAME].keys():
-            assert actual[Container.CONTAINER_FIELD_NAME][key].endswith(utc_offset)
+            self.assertTrue(actual[Container.CONTAINER_FIELD_NAME][key].endswith(utc_offset))
 
     def _datetime_timezone_iterable_helper(self, utc_offset):
         actual = Serializer.to_json_dict(self._container)
@@ -890,7 +890,7 @@ class DictSerializationWithTimes(unittest.TestCase):
         self.assertListEqual(expected, actual[Container.CONTAINER_FIELD_NAME])
 
         for item in actual[Container.CONTAINER_FIELD_NAME]:
-            assert item.endswith(utc_offset)
+            self.assertTrue(item.endswith(utc_offset))
 
 
 class DictSerializationWithNotNullable(unittest.TestCase):

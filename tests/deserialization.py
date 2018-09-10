@@ -18,7 +18,7 @@ class DictDeserialization(unittest.TestCase):
     def test_automatic_target_object_recognition_with_simple_object_1(self):
         actual = Deserializer.from_json_dict({Container.CONTAINER_FIELD_NAME: "some value"})
 
-        self.assertTrue(type(actual) is Container)
+        self.assertIsInstance(actual, Container)
 
     # noinspection PyMethodMayBeStatic
     def test_automatic_target_object_recognition_with_simple_object_2(self):
@@ -27,7 +27,7 @@ class DictDeserialization(unittest.TestCase):
             JsonObjectWithRequiredField.SOME_FIELD_NAME: 42
         })
 
-        self.assertTrue(type(actual) is JsonObjectWithRequiredField)
+        self.assertIsInstance(actual, JsonObjectWithRequiredField)
 
     # noinspection PyMethodMayBeStatic
     def test_automatic_target_object_recognition_with_simple_object_3(self):
@@ -35,7 +35,7 @@ class DictDeserialization(unittest.TestCase):
             JsonObjectWithRequiredField.REQUIRED_FIELD_NAME: "value"
         })
 
-        self.assertTrue(type(actual) is JsonObjectWithRequiredField)
+        self.assertIsInstance(actual, JsonObjectWithRequiredField)
 
     def test_automatic_target_object_recognition_with_inheritance(self):
         d = {
@@ -45,7 +45,7 @@ class DictDeserialization(unittest.TestCase):
         }
         actual = Deserializer.from_json_dict(d)
 
-        self.assertTrue(type(actual) is ExtendedCar)
+        self.assertIsInstance(actual, ExtendedCar)
 
     def test_automatic_target_object_recognition_with_deeper_inheritance(self):
         d = {
@@ -56,7 +56,7 @@ class DictDeserialization(unittest.TestCase):
         }
         actual = Deserializer.from_json_dict(d)
 
-        self.assertTrue(type(actual) is ExtendedExtendedCar)
+        self.assertIsInstance(actual, ExtendedExtendedCar)
 
     def test_automatic_target_object_recognition_with_two_objects_where_one_has_the_same_but_more_fields(self):
         d = {
@@ -66,7 +66,7 @@ class DictDeserialization(unittest.TestCase):
         }
         actual = Deserializer.from_json_dict(d)
 
-        self.assertTrue(type(actual) is IssuePriority)
+        self.assertIsInstance(actual, IssuePriority)
 
     # noinspection PyMethodMayBeStatic
     def test_if_dict_is_casted_into_json_object(self):
@@ -74,7 +74,7 @@ class DictDeserialization(unittest.TestCase):
             Container.CONTAINER_FIELD_NAME: "some value"
         }
         actual = Deserializer.from_json_dict(d, Container)
-        assert type(actual) is Container
+        self.assertIsInstance(actual, Container)
 
     def test_empty_dict_as_value(self):
         d = {
@@ -111,7 +111,7 @@ class DictDeserialization(unittest.TestCase):
         actual = Deserializer.from_json_dict(d, Container)
 
         if sys.version_info.major == _PY2:
-            assert type(actual.container) is unicode
+            self.assertIsInstance(actual.container, unicode)
 
         self.assertEqual(d[Container.CONTAINER_FIELD_NAME], actual.container)
 
@@ -137,7 +137,7 @@ class DictDeserialization(unittest.TestCase):
             }
         }
         actual = Deserializer.from_json_dict(d, Container)
-        assert type(actual.container) is Container
+        self.assertIsInstance(actual.container, Container)
 
     def test_json_object_without_fields(self):
         d = {
@@ -206,7 +206,7 @@ class DictDeserialization(unittest.TestCase):
 
         if sys.version_info.major == _PY2:
             for element in actual.container:
-                assert type(element) is unicode
+                self.assertIsInstance(element, unicode)
 
         self.assertListEqual(d[Container.CONTAINER_FIELD_NAME], actual.container)
 
@@ -238,11 +238,11 @@ class DictDeserialization(unittest.TestCase):
         }
         actual = Deserializer.from_json_dict(d, Container)
 
-        assert all(type(item) is Container for item in actual.container)
+        all(self.assertIsInstance(item, Container) for item in actual.container)
 
         expected = [Deserializer.from_json_dict(item, Container) for item in d[Container.CONTAINER_FIELD_NAME]]
         for item in expected:
-            assert any(item.container == actual_item.container for actual_item in actual.container)
+            self.assertTrue(any(item.container == actual_item.container for actual_item in actual.container))
 
     def test_list_with_not_deserializable_object(self):
         d = {

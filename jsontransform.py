@@ -260,7 +260,7 @@ class _JsonCommon(object):
         result = {}
 
         for member in inspect.getmembers(type(obj)):
-            if type(member[1]) == property:
+            if isinstance(member[1], property):
                 if "__wrapped__" in member[1].fget.__dict__.keys():
                     member[1].fget(obj)
                     wrapper = member[1].fget.__wrapped__
