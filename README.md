@@ -1,4 +1,6 @@
-# JSON Transform
+# JSON-Transform
+
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/a1aab0fd1e964a729749f6d2c962551c)](https://www.codacy.com/app/pmorawski/json-transform?utm_source=Peter-Morawski@bitbucket.org&amp;utm_medium=referral&amp;utm_content=Peter-Morawski/json-transform&amp;utm_campaign=Badge_Grade)
 
 Json Transform allows you to simply serialize your Python objects into a JSON format and vice versa.
 
