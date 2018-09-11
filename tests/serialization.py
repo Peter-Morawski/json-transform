@@ -191,7 +191,7 @@ class DictSerialization(unittest.TestCase):
         expected = [item for item in self._container.container]
         for lst in expected:
             for i, item in enumerate(lst):
-                if type(item) is Container:
+                if isinstance(item, Container):
                     lst[i] = Serializer.to_json_dict(lst[i])
 
         self.assertListEqual(expected, actual[Container.CONTAINER_FIELD_NAME])
