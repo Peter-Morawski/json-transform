@@ -2,5 +2,6 @@ engines:
   coverage:
     enabled: true
     exclude_paths:
-    - tests/
-    - test_suite.py
+    - "tests/**"
+    - "test_suite.py"
+    - "docs/**"
