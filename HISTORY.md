@@ -1,5 +1,9 @@
 # History
 
+## 1.0.0 (2018-09-14)
+
+* implement the new/stable API design
+
 ## 0.4.1 (2018-09-10)
 
 * fixed wrong object match when searching for the most matching `JSONObject` while deserializing and there were multiple

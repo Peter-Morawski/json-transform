@@ -67,7 +67,7 @@ class FieldMode(object):
 
     DECODE = "d"
     """
-    Indicates that the :func:`field` can **ONLY** be decoded. 
+    Indicates that the :func:`field` can **ONLY** be decoded.
     """
 
     ENCODE_DECODE = "ed"
@@ -281,7 +281,7 @@ class JSONDecoder(object):
             target = self._get_most_matching_json_object(json_dict)
 
         result = target()
-        self._validate_required_fields(result, json_dict)
+        self.validate_required_fields(result, json_dict)
         properties = _JSONCommon.get_decorated_properties(result)
         if not properties:
             raise ConfigurationError("The JSONObject `{}` doesn't define any fields".format(target.__name__))
@@ -391,7 +391,8 @@ class JSONDecoder(object):
 
         raise MissingObjectError("No matching JSONObject could be found")
 
-    def _validate_required_fields(self, json_object, json_dict):
+    @staticmethod
+    def validate_required_fields(json_object, json_dict):
         """
         Validate if a `dict` which will be decoded satisfied all required fields of the :class:`JSONObject` into which
         it will be decoded.
