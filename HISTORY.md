@@ -2,14 +2,14 @@
 
 ## 0.4.1 (2018-09-10)
 
-* fixed wrong object match when searching for the most matching `JsonObject` while deserializing and there were multiple
-objects that had the same number of matching occurrences - then the `JsonObject` with the exact same amount of
+* fixed wrong object match when searching for the most matching `JSONObject` while deserializing and there were multiple
+objects that had the same number of matching occurrences - then the `JSONObject` with the exact same amount of
 fields as the `dict` should be taken
 
 ## 0.4.0 (2018-09-08)
 
 * added the name of the object to the `FieldValidationError` which is thrown in the `validate_if_required_fields_satisfied`
-* fixed the wrong object type when searching the most matching `JsonObject` while deserializing
+* fixed the wrong object type when searching the most matching `JSONObject` while deserializing
 
 ## 0.3.1 (2018-09-03)
 
@@ -32,7 +32,7 @@ fields as the `dict` should be taken
 
 ## 0.1.9 (2018-08-21)
 
-* removed the serialization and deserialization logic from the JsonObject and created separate objects for serializing and
+* removed the serialization and deserialization logic from the JSONObject and created separate objects for serializing and
 deserializing
 
 ## 0.1.8 (2018-08-19)
@@ -44,7 +44,7 @@ serialization and deserialization
 
 * added the **required** parameter to the `field()` decorator which indicates that a field is required during the
 deserialization
-* fixed the deserialization of a dict which doesnt have an appropriate JsonObject so that all it's values are reversed
+* fixed the deserialization of a dict which doesnt have an appropriate JSONObject so that all it's values are reversed
 from the normalization process
 
 ## 0.1.6 (2018-08-15)
@@ -59,6 +59,6 @@ from the normalization process
 ## 0.1.5 (2018-08-08)
 
 * first release of the package
-* possibility to serialize and deserialize python objects by inheriting from **JsonObject** and annotating property
+* possibility to serialize and deserialize python objects by inheriting from **JSONObject** and annotating property
 getters with the `field()` decorator
 * add custom name to fields by passing a string into the `field()` decorator

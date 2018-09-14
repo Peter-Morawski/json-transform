@@ -6,8 +6,8 @@
 json-transform
 ==============
 
-json-transform is a framework to help you serialize and deserialize your python objects into JSON documents.
-The source code of Json Transform is hosted on `Bitbucket <https://bitbucket.org/Peter-Morawski/json-transform/>`_.
+json-transform is a small library to help you convert your python objects into JSON documents and vice versa.
+The source code of json-transform is hosted on `Bitbucket <https://bitbucket.org/Peter-Morawski/json-transform/>`_.
 
 New? Here is some help:
 
@@ -24,6 +24,7 @@ Contents
    installation
    getting-started
    fields
+   api
 
 Indices and tables
 ==================

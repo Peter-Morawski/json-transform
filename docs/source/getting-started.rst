@@ -1,5 +1,7 @@
 .. _getting-started:
 
+.. module:: jsontransform
+
 Getting Started
 ===============
 
@@ -8,48 +10,41 @@ This guide will show you how you can start using json-transform in order to simp
 What you'll learn
 -----------------
 
-You'll learn how to define a JSON object in python using json-transform and how to serialize your object instance into:
-
-- a python dict
-- a JSON string or
-- a JSON file
-
-as well as deserialize it from these.
+You'll learn how to define a JSON object in python using json-transform and how to encode your object instance into
+a JSON file as well as deserialize it from one.
 
 Installing json-transform
 -------------------------
 
 Before you can start testing the following examples, you first need to install json-transform. To do this simply visit the
-:ref:`Installation <installation>` Page and follow the appropriate guide there.
+:ref:`Installation <installation>` Page and follow the PyPI guide there.
 
-Defining our first JSON object in python using json-transform
--------------------------------------------------------------
+Defining our first JSONObject using json-transform
+---------------------------------------------------
 
-Now that you have successfully installed json-transform you can finally start defining your first JSON object. To do
-that you have to create a POPO (Plain Old Python Object). It can have any amount of methods, properties, etc...
+Now that you have successfully installed json-transform we can finally start defining your first :py:class:`JSONObject`.
+To do that you have to create a Plain Old Python Object. It can have any amount of methods, properties, etc...
 The important part is
 
-1. it needs to extend the :py:class:`JsonObject` class so that json-transform will recognize that this object is
-intended to be serializable and deserializable to JSON.
+1. it needs to extend the :py:class:`JSONObject` class so that json-transform will recognize that this object is
+intended to be a encodable and decodable to a JSON document.
 
-2. it needs to have at least one property getter decorated with the :py:func:`field` decorator.
+2. it needs to have at least one property decorated with the :py:func:`field` decorator.
 
-So let's define a simple data structure.
+So let's define a simple entity.
 
 .. code-block:: python
 
-    from jsontransform import JsonObject, field
+    from jsontransform import JSONObject, field
 
 
-    class Person(JsonObject):
+    class Person(JSONObject):
         def __init__(self):
             self._first_name = ""
             self._last_name = ""
-            self._birthday = None
-            self._age = 0
 
         @property
-        @field("firstName", required=True, nullable=False)
+        @field("firstName", required=True)
         def first_name(self):
             return self._first_name
 
@@ -66,207 +61,83 @@ So let's define a simple data structure.
         def last_name(self, value):
             self._last_name = value
 
-        @property
-        @field()
-        def birthday(self):
-            return self._birthday
 
-        @birthday.setter
-        def birthday(self, value):
-            self._birthday = value
-
-        @property
-        @field()
-        def age(self):
-            return self._age
-
-        @age.setter
-        def age(self, value):
-            self._age = value
-
-In this example some of the fields have a custom name defined. For example the *first_name* which will be called
-**"firstName"** in the resulting JSON object and *last_name* which will be called **"lastName"**.
-
-The *first_name* property also has two other parameters:
-
-* the **required** parameter which indicates that this field has to be available when we want to *deserialize* a JSON object into our python object
-
-* and the **nullable** parameter which indicates that the value of the field cannot be ``null``/``None`` when serializing or deserializing the object
+In this example we have given the `first_name` and the `last_name` property a custom **field_name** so when we encode
+our :py:class:`JSONObject` the fields in the resulting JSON document will be called **firstName** and **lastName**. The
+same applies for the decoding. The decoder will search for fields called *firstName* and *lastName*. We will see this
+later in action.
 
 
-Now that we have defined our object let's create an instance of it.
+Besides a **field_name** the `first_name` property has the **required** parameter set to True. This means that this
+:py:func:`field` is mandatory when we want to decode a JSON document into our :py:class:`JSONObject`.
+
+
+Now that we have defined our entity let's create an instance of it.
 
 .. code-block:: python
-
-    import datetime
 
     peter = Person()
     peter.first_name = "Peter"
     peter.last_name = "Parker"
-    peter.birthday = datetime.date(1962, 9, 23)
-    peter.age = 56
 
-Serializing
------------
+Encoding
+--------
 
-When we want to serialize our :py:class:`JsonObject` we have to use the :py:class:`Serializer` which offers three
-different functions to serialize our object:
+When we want to encode our :py:class:`JSONObject` we can use the following functions
 
-- :py:func:`to_json_dict`
-- :py:func:`to_json_string`
-- :py:func:`to_json_file`
+- :py:func:`dump` to encode it into a `write()` supporting file-like object
+- :py:func:`dumps` to encode it into an `str` or
+- :py:func:`dumpd` to encode it into a `dict`
+
+It is also possible to encode our :py:class:`JSONObject` using the :py:class:`JSONEncoder` but to keep it simple we will
+use the :py:func:`dumpd` function to encode our :py:class:`JSONObject` into a `dict`.
 
 
-to_json_dict
-++++++++++++
-
-The :py:func:`to_json_dict` function serializes the instance of an object into a python ``dict``.
-Let's try it with our previously created object.
+To keep things simple we will use the :py:func:`dumpd` function to encode our :py:class:`JSONObject` into a dict which
+is JSON conform.
 
 .. code-block:: python
 
-    from jsontransform import Serializer
+    from jsontransform import dumpd
 
-    Serializer.to_json_dict(peter)
+    dumpd(peter)
     # result: {'age': 56, 'birthday': '1962-09-23', 'firstName': 'Peter', 'lastName': 'Parker'}
 
-to_json_string
-++++++++++++++
 
-The :py:func:`to_json_string` function serializes the instance of an object into a JSON object and returns it as an
-``str``.
-With our previously created object it will look like follows:
+Decoding
+--------
 
-.. code-block:: python
+When we want to decode a file, `dict` or an `str` into our :py:class:`JSONObject` we can use the following functions
 
-    from jsontransform import Serializer
+- :py:func:`load` to decode a :py:class:`JSONObject` from a `read()` supporting file-like object
+- :py:func:`loads` to decode a :py:class:`JSONObject` from an `str` or
+- :py:func:`loadd` to decode a :py:class:`JSONObject` from a `dict`
 
-    Serializer.to_json_string(peter)
-    # result: {"age": 56, "birthday": "1962-09-23", "firstName": "Peter", "lastName": "Parker"}
+We also have a :py:class:`JSONDecoder` which can be instantiated and provides the same functionality like the previously
+mentioned functions but to keep it simple we'll use the :py:func:`loadd` function to decode a `dict` into our
+:py:class:`JSONObject`.
 
-to_json_file
-++++++++++++
-
-The :py:func:`to_json_file` function serializes the instance of an :py:class:`JsonObject` as a JSON document into a
-file.
 
 .. code-block:: python
 
-    from jsontransform import Serializer
+    from jsontransform import loadd
 
-    with open("peter.json", "w") as f:
-        Serializer.to_json_file(f, peter)
-        # the file (peter.json) will contain: {"age": 56, "birthday": "1962-09-23", "firstName": "Peter", "lastName": "Parker"}
+    peter = loadd({'age': 56, 'birthday': '1962-09-23', 'firstName': 'Peter', 'lastName': 'Parker'})
 
-Deserializing
--------------
+    print(type(peter))
+    # result <class 'Person'>
 
-Just like we use the :py:class:`Serializer` to serialize a :py:class:`JsonObject`, we use the :py:class:`Deserializer`
-to deserialize a :py:class:`JsonObject`. The :py:class:`Deserializer` offers three methods to deserialize our
-:py:class:`JsonObject`:
-
-- :py:func:`from_json_dict`
-- :py:func:`from_json_string`
-- :py:func:`from_json_file`
-
-from_json_dict
-++++++++++++++
-
-The :py:func:`from_json_dict` function deserializes a python ``dict`` into the target object instance.
-Which will look like the following with our :py:class:`Person` object.
-
-.. code-block:: python
-
-    from jsontransform import Deserializer
-
-    peter = Deserializer.from_json_dict(
-        {'age': 56, 'birthday': '1962-09-23', 'firstName': 'Peter', 'lastName': 'Parker'},
-        Person
-    )
     print(peter.first_name)
     # result: Peter
 
     print(peter.last_name)
     # result: Parker
-
-    print(peter.birthday)
-    # result: 1962-09-23
-
-    print(peter.age)
-    # result: 56
-
 
 .. note::
 
-    The deserialization functions of the :py:class:`Deserializer` take an **optional** second parameter which defines the target
-    :py:class:`JsonObject` (in our case :py:class:`Person`). If this parameter is empty then the
-    :py:class:`Deserializer` will search for the :py:class:`JsonObject` which matches the most.
+    When decoding into a :py:class:`JSONObject` we can specify the target type / the :py:class:`JSONObject` into which
+    the JSON document should be decoded OR we can let json-transform find the most matching :py:class:`JSONObject` by
+    itself *(like in the example above)*.
 
-After the deserialization our fields/properties will be casted into their appropriate type. To see which types
+After the decoding our fields/properties will be casted into their appropriate type. To see which types
 are supported check the :ref:`Fields <fields>` page.
-
-Here are some examples:
-
-.. code-block:: python
-
-    print(type(peter.first_name))
-    # result: <class 'str'>
-
-    print(type(peter.last_name))
-    # result: <class 'str'>
-
-    print(type(peter.birthday))
-    # result: <class 'datetime.date'>
-
-    print(type(peter.age))
-    # result: <class 'int'>
-
-from_json_string
-++++++++++++++++
-
-The :py:func:`from_json_string` function deserializes an ``str`` which contains a JSON object inside into the target
-object instance. Let's try it with our object:
-
-.. code-block:: python
-
-    from jsontransform import Deserializer
-
-    peter = Deserializer.from_json_string(
-        "{'age': 56, 'birthday': '1962-09-23', 'firstName': 'Peter', 'lastName': 'Parker'}"
-    )
-    print(peter.first_name)
-    # result: Peter
-
-    print(peter.last_name)
-    # result: Parker
-
-    print(peter.birthday)
-    # result: 1962-09-23
-
-    print(peter.age)
-    # result: 56
-
-from_json_file
-++++++++++++++
-
-The :py:func:`from_json_file` function creates an instance of our target object from a file which contains a JSON
-object.
-So let's try it:
-
-.. code-block:: python
-
-    from jsontransform import Deserializer
-
-    with open("peter.json", "r") as f:
-        peter = Deserializer.from_json_file(f)
-        print(peter.first_name)
-        # result: Peter
-
-        print(peter.last_name)
-        # result: Parker
-
-        print(peter.birthday)
-        # result: 1962-09-23
-
-        print(peter.age)
-        # result: 56

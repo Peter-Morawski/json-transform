@@ -2,7 +2,7 @@
 
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/a1aab0fd1e964a729749f6d2c962551c)](https://www.codacy.com/app/pmorawski/json-transform?utm_source=Peter-Morawski@bitbucket.org&amp;utm_medium=referral&amp;utm_content=Peter-Morawski/json-transform&amp;utm_campaign=Badge_Grade)
 
-Json Transform allows you to simply serialize your Python objects into a JSON format and vice versa.
+Json Transform allows you to simply convert your Python objects into a JSON document and vice versa.
 
 New? Here is some help:
 
@@ -10,18 +10,17 @@ New? Here is some help:
 
 ### Example
 
-Setup your object.
+Setup your object/entity.
 
 ```python
-from jsontransform import field, JsonObject
+from jsontransform import field, JSONObject
 
 
-class Customer(JsonObject):
+class Customer(JSONObject):
     def __init__(self):
         self._first_name = ""
-        self._age = 0
     
-    # set a custom name for the field becuase by default it will be the function name
+    # set a custom name for the field because by default it will be the function name
     @property
     @field("firstName")
     def first_name(self):
@@ -30,63 +29,61 @@ class Customer(JsonObject):
     @first_name.setter
     def first_name(self, value):
         self._first_name = value
-    
-    @property
-    @field()
-    def age(self):
-        return self._age
-    
-    @age.setter
-    def age(self, value):
-        self._age = value
 ```
 
-Instantiate the object and serialize it.
+Instantiate the object and encode it to a JSON document.
 
 ```python
-from jsontransform import Serializer
+from jsontransform import dumpd, dump, dumps
 
 new_customer = Customer()
 new_customer.first_name = "Peter"
-new_customer.age = 1
 
 # get a dict representation of the object
-# result: {"firstName": "Peter", "age": 1}
-Serializer.to_json_dict(new_customer)
+dumpd(new_customer)
+# result: {"firstName": "Peter"}
 
-# we can also write the object directly into a file
+# get an str with with our encoded object
+dumps(new_customer)
+# result: '{"firstName": "Peter"}'
+
+# we can also encode the object directly into a file
 with open("new_customer.json", "w") as f:
-    Serializer.to_json_file(f, new_customer)
+    dump(new_customer, f)
 ```
 
-Deserialize a JSON file into your object.
 
-**JSON file (customer.json):**
+**JSON file (new_customer.json):**
 
 ```json
 {
-  "firstName": "Dennis",
-  "age": 70
+  "firstName": "Peter"
 }
 ```
+
+Decode a JSON document.
 
 **Code:**
 
 ```python
-from jsontransform import Deserializer
+from jsontransform import load, loadd, loads
 
-# we load our customer object
-with open("customer.json", "r") as f:
-    customer = Deserializer.from_json_file(f)
+# we can decode our customer object from a JSON file
+with open("new_customer.json", "r") as f:
+    customer = load(f)
     
-customer.age
-# result: 70
+# or a dict
+customer = loadd({"firstName": "Peter"})
+
+# or an str as well
+customer = loads("{'firstName': 'Peter'}")
 
 customer.first_name
-# result: Dennis
+# result: Peter
 ```
 
 ### More
 
 * Check out the [documentation](https://json-transform.readthedocs.io/en/latest/).
 * Check out the [history](https://bitbucket.org/Peter-Morawski/json-transform/src/master/HISTORY.md)
+* Check out the [API design](https://bitbucket.org/Peter-Morawski/json-transform/wiki/API%20Design)

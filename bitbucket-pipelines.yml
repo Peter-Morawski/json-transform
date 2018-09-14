@@ -42,7 +42,6 @@ pipelines:
         - pip install -r requirements.txt
         - pip install -r tests/requirements.txt
         - pip install coverage codacy-coverage
-        - python test_suite.py
         - coverage xml jsontransform.py
         - cat coverage.xml
         - export CODACY_PROJECT_TOKEN=4050f54ae9394504993c945f16dd9074

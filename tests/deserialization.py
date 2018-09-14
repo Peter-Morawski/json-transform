@@ -4,38 +4,38 @@ import datetime
 import sys
 import unittest
 
-from jsontransform import ConfigurationError, Deserializer, FieldValidationError, MissingObjectError, _PY2
-from .datastructure import Car, Container, ExtendedCar, ExtendedExtendedCar, IssuePriority, \
-    JsonObjectWithNotNullableField, JsonObjectWithRequiredField, JsonObjectWithoutFields
+from jsontransform import ConfigurationError, ConstraintViolationError, MissingObjectError, _PY2, loadd
+from .datastructure import Car, Container, ContainerWithFieldModeDecodeOnly, ContainerWithFieldModeEncodeOnly, \
+    ExtendedCar, ExtendedExtendedCar, IssuePriority, JSONObjectWithRequiredField, JSONObjectWithoutFields
 
 
 class DictDeserialization(unittest.TestCase):
     def test_automatic_target_object_recognition_with_unknown_json_object(self):
         with self.assertRaises(MissingObjectError):
-            Deserializer.from_json_dict({"some_unknown_field": "some value"})
+            loadd({"some_unknown_field": "some value"})
 
     # noinspection PyMethodMayBeStatic
     def test_automatic_target_object_recognition_with_simple_object_1(self):
-        actual = Deserializer.from_json_dict({Container.CONTAINER_FIELD_NAME: "some value"})
+        actual = loadd({Container.CONTAINER_FIELD_NAME: "some value"})
 
         self.assertIsInstance(actual, Container)
 
     # noinspection PyMethodMayBeStatic
     def test_automatic_target_object_recognition_with_simple_object_2(self):
-        actual = Deserializer.from_json_dict({
-            JsonObjectWithRequiredField.REQUIRED_FIELD_NAME: "value",
-            JsonObjectWithRequiredField.SOME_FIELD_NAME: 42
+        actual = loadd({
+            JSONObjectWithRequiredField.REQUIRED_FIELD_NAME: "value",
+            JSONObjectWithRequiredField.SOME_FIELD_NAME: 42
         })
 
-        self.assertIsInstance(actual, JsonObjectWithRequiredField)
+        self.assertIsInstance(actual, JSONObjectWithRequiredField)
 
     # noinspection PyMethodMayBeStatic
     def test_automatic_target_object_recognition_with_simple_object_3(self):
-        actual = Deserializer.from_json_dict({
-            JsonObjectWithRequiredField.REQUIRED_FIELD_NAME: "value"
+        actual = loadd({
+            JSONObjectWithRequiredField.REQUIRED_FIELD_NAME: "value"
         })
 
-        self.assertIsInstance(actual, JsonObjectWithRequiredField)
+        self.assertIsInstance(actual, JSONObjectWithRequiredField)
 
     def test_automatic_target_object_recognition_with_inheritance(self):
         d = {
@@ -43,7 +43,7 @@ class DictDeserialization(unittest.TestCase):
             ExtendedCar.FIELD_HORSEPOWER_NAME: 135,
             ExtendedCar.FIELD_MODEL_NAME_NAME: "extended car simple model"
         }
-        actual = Deserializer.from_json_dict(d)
+        actual = loadd(d)
 
         self.assertIsInstance(actual, ExtendedCar)
 
@@ -54,7 +54,7 @@ class DictDeserialization(unittest.TestCase):
             ExtendedExtendedCar.FIELD_MAX_SPEED_NAME: 400,
             ExtendedExtendedCar.FIELD_COLOR_NAME: u"white"
         }
-        actual = Deserializer.from_json_dict(d)
+        actual = loadd(d)
 
         self.assertIsInstance(actual, ExtendedExtendedCar)
 
@@ -64,7 +64,7 @@ class DictDeserialization(unittest.TestCase):
             IssuePriority.ID_NAME: u"1",
             IssuePriority.ICON_URL_NAME: u"http://www.some-domain.com/some/path/icon.png"
         }
-        actual = Deserializer.from_json_dict(d)
+        actual = loadd(d)
 
         self.assertIsInstance(actual, IssuePriority)
 
@@ -73,42 +73,42 @@ class DictDeserialization(unittest.TestCase):
         d = {
             Container.CONTAINER_FIELD_NAME: "some value"
         }
-        actual = Deserializer.from_json_dict(d, Container)
+        actual = loadd(d, Container)
         self.assertIsInstance(actual, Container)
 
     def test_empty_dict_as_value(self):
         d = {
             Container.CONTAINER_FIELD_NAME: {}
         }
-        actual = Deserializer.from_json_dict(d, Container)
+        actual = loadd(d, Container)
         self.assertEqual(d[Container.CONTAINER_FIELD_NAME], actual.container)
 
     def test_none(self):
         d = {
             Container.CONTAINER_FIELD_NAME: None
         }
-        actual = Deserializer.from_json_dict(d, Container)
+        actual = loadd(d, Container)
         self.assertEqual(d[Container.CONTAINER_FIELD_NAME], actual.container)
 
     def test_bool(self):
         d = {
             Container.CONTAINER_FIELD_NAME: True
         }
-        actual = Deserializer.from_json_dict(d, Container)
+        actual = loadd(d, Container)
         self.assertEqual(d[Container.CONTAINER_FIELD_NAME], actual.container)
 
     def test_str(self):
         d = {
             Container.CONTAINER_FIELD_NAME: "some string"
         }
-        actual = Deserializer.from_json_dict(d, Container)
+        actual = loadd(d, Container)
         self.assertEqual(d[Container.CONTAINER_FIELD_NAME], actual.container)
 
     def test_unicode(self):
         d = {
             Container.CONTAINER_FIELD_NAME: u"some unicode string"
         }
-        actual = Deserializer.from_json_dict(d, Container)
+        actual = loadd(d, Container)
 
         if sys.version_info.major == _PY2:
             self.assertIsInstance(actual.container, unicode)
@@ -119,14 +119,14 @@ class DictDeserialization(unittest.TestCase):
         d = {
             Container.CONTAINER_FIELD_NAME: 42
         }
-        actual = Deserializer.from_json_dict(d, Container)
+        actual = loadd(d, Container)
         self.assertEqual(d[Container.CONTAINER_FIELD_NAME], actual.container)
 
     def test_float(self):
         d = {
             Container.CONTAINER_FIELD_NAME: 42.1337
         }
-        actual = Deserializer.from_json_dict(d, Container)
+        actual = loadd(d, Container)
         self.assertEqual(d[Container.CONTAINER_FIELD_NAME], actual.container)
 
     # noinspection PyMethodMayBeStatic
@@ -136,7 +136,7 @@ class DictDeserialization(unittest.TestCase):
                 Container.CONTAINER_FIELD_NAME: "some string"
             }
         }
-        actual = Deserializer.from_json_dict(d, Container)
+        actual = loadd(d, Container)
         self.assertIsInstance(actual.container, Container)
 
     def test_json_object_without_fields(self):
@@ -145,7 +145,7 @@ class DictDeserialization(unittest.TestCase):
         }
 
         with self.assertRaises(ConfigurationError):
-            Deserializer.from_json_dict(d, JsonObjectWithoutFields)
+            loadd(d, JSONObjectWithoutFields)
 
     def test_wrong_json_object(self):
         d = {
@@ -153,7 +153,7 @@ class DictDeserialization(unittest.TestCase):
         }
 
         with self.assertRaises(TypeError):
-            Deserializer.from_json_dict(d, ExtendedCar)
+            loadd(d, ExtendedCar)
 
     def test_not_deserializable_object(self):
         d = {
@@ -161,48 +161,48 @@ class DictDeserialization(unittest.TestCase):
         }
 
         with self.assertRaises(TypeError):
-            Deserializer.from_json_dict(d, Container)
+            loadd(d, Container)
 
     def test_empty_list(self):
         d = {
             Container.CONTAINER_FIELD_NAME: []
         }
-        actual = Deserializer.from_json_dict(d, Container)
+        actual = loadd(d, Container)
         self.assertEqual(d[Container.CONTAINER_FIELD_NAME], actual.container)
 
     def test_list_with_none(self):
         d = {
             Container.CONTAINER_FIELD_NAME: [None, None, None]
         }
-        actual = Deserializer.from_json_dict(d, Container)
+        actual = loadd(d, Container)
         self.assertListEqual(d[Container.CONTAINER_FIELD_NAME], actual.container)
 
     def test_list_with_bool(self):
         d = {
             Container.CONTAINER_FIELD_NAME: [True, False, True]
         }
-        actual = Deserializer.from_json_dict(d, Container)
+        actual = loadd(d, Container)
         self.assertListEqual(d[Container.CONTAINER_FIELD_NAME], actual.container)
 
     def test_list_with_empty_dict(self):
         d = {
             Container.CONTAINER_FIELD_NAME: [{}]
         }
-        actual = Deserializer.from_json_dict(d, Container)
+        actual = loadd(d, Container)
         self.assertListEqual(d[Container.CONTAINER_FIELD_NAME], actual.container)
 
     def test_list_with_str(self):
         d = {
             Container.CONTAINER_FIELD_NAME: ["some string", "another string", "aaaaaa strriiiiinggg"]
         }
-        actual = Deserializer.from_json_dict(d, Container)
+        actual = loadd(d, Container)
         self.assertListEqual(d[Container.CONTAINER_FIELD_NAME], actual.container)
 
     def test_list_with_unicode(self):
         d = {
             Container.CONTAINER_FIELD_NAME: [u"some unicode string", u"another unicode string", u"aaaaa"]
         }
-        actual = Deserializer.from_json_dict(d, Container)
+        actual = loadd(d, Container)
 
         if sys.version_info.major == _PY2:
             for element in actual.container:
@@ -214,14 +214,14 @@ class DictDeserialization(unittest.TestCase):
         d = {
             Container.CONTAINER_FIELD_NAME: [1, 2, 3, 4, 5, 6]
         }
-        actual = Deserializer.from_json_dict(d, Container)
+        actual = loadd(d, Container)
         self.assertListEqual(d[Container.CONTAINER_FIELD_NAME], actual.container)
 
     def test_list_with_float(self):
         d = {
             Container.CONTAINER_FIELD_NAME: [1.123, 2.234, 3.345, 4.456]
         }
-        actual = Deserializer.from_json_dict(d, Container)
+        actual = loadd(d, Container)
         self.assertListEqual(d[Container.CONTAINER_FIELD_NAME], actual.container)
 
     # noinspection PyMethodMayBeStatic
@@ -236,11 +236,11 @@ class DictDeserialization(unittest.TestCase):
                 }
             ]
         }
-        actual = Deserializer.from_json_dict(d, Container)
+        actual = loadd(d, Container)
 
         all(self.assertIsInstance(item, Container) for item in actual.container)
 
-        expected = [Deserializer.from_json_dict(item, Container) for item in d[Container.CONTAINER_FIELD_NAME]]
+        expected = [loadd(item, Container) for item in d[Container.CONTAINER_FIELD_NAME]]
         for item in expected:
             self.assertTrue(any(item.container == actual_item.container for actual_item in actual.container))
 
@@ -250,20 +250,20 @@ class DictDeserialization(unittest.TestCase):
         }
 
         with self.assertRaises(TypeError):
-            Deserializer.from_json_dict(d, Container)
+            loadd(d, Container)
 
     def test_list_with_list(self):
         d = {
             Container.CONTAINER_FIELD_NAME: [[], [1, 2, 3], ["some string", "another string"]]
         }
-        actual = Deserializer.from_json_dict(d, Container)
+        actual = loadd(d, Container)
         self.assertListEqual(d[Container.CONTAINER_FIELD_NAME], actual.container)
 
     def test_list_with_dict(self):
         d = {
             Container.CONTAINER_FIELD_NAME: [{"key1": "some value", "key2": 1}, {"key1": 42}]
         }
-        actual = Deserializer.from_json_dict(d, Container)
+        actual = loadd(d, Container)
         self.assertListEqual(d[Container.CONTAINER_FIELD_NAME], actual.container)
 
     def test_super_class_as_target_of_json_object(self):
@@ -272,7 +272,7 @@ class DictDeserialization(unittest.TestCase):
             ExtendedCar.FIELD_MAX_SPEED_NAME: 130,
             ExtendedCar.FIELD_HORSEPOWER_NAME: 30
         }
-        actual = Deserializer.from_json_dict(d, Car)
+        actual = loadd(d, Car)
 
         self.assertIsInstance(actual, Car)
         self.assertEqual(d[Car.FIELD_MODEL_NAME_NAME], actual.model_name)
@@ -287,7 +287,7 @@ class DictDeserialization(unittest.TestCase):
                 }
             }
         }
-        actual = Deserializer.from_json_dict(d, Container)
+        actual = loadd(d, Container)
 
         self.assertIsInstance(actual.container, dict)
         self.assertIsInstance(actual.container["key1"], Container)
@@ -296,7 +296,7 @@ class DictDeserialization(unittest.TestCase):
         d = {
             Container.CONTAINER_FIELD_NAME: u"2018-08-03"
         }
-        actual = Deserializer.from_json_dict(d)
+        actual = loadd(d)
 
         self.assertIsInstance(actual.container, datetime.date)
         self.assertNotIsInstance(actual.container, datetime.datetime)
@@ -305,7 +305,7 @@ class DictDeserialization(unittest.TestCase):
         d = {
             Container.CONTAINER_FIELD_NAME: u"2018-08-03T16:02:21Z"
         }
-        actual = Deserializer.from_json_dict(d)
+        actual = loadd(d)
 
         self.assertIsInstance(actual.container, datetime.datetime)
 
@@ -313,7 +313,7 @@ class DictDeserialization(unittest.TestCase):
         d = {
             Container.CONTAINER_FIELD_NAME: [u"2018-08-03"]
         }
-        actual = Deserializer.from_json_dict(d)
+        actual = loadd(d)
 
         self.assertIsInstance(actual.container[0], datetime.date)
         self.assertNotIsInstance(actual.container[0], datetime.datetime)
@@ -322,7 +322,7 @@ class DictDeserialization(unittest.TestCase):
         d = {
             Container.CONTAINER_FIELD_NAME: [u"2018-08-03T16:02:21Z"]
         }
-        actual = Deserializer.from_json_dict(d)
+        actual = loadd(d)
 
         self.assertIsInstance(actual.container[0], datetime.datetime)
 
@@ -330,55 +330,55 @@ class DictDeserialization(unittest.TestCase):
 class DictDeserializationWithRequiredField(unittest.TestCase):
     def test_missing_required_field(self):
         d = {
-            JsonObjectWithRequiredField.SOME_FIELD_NAME: "some string"
+            JSONObjectWithRequiredField.SOME_FIELD_NAME: "some string"
         }
 
-        with self.assertRaises(FieldValidationError):
-            Deserializer.from_json_dict(d, JsonObjectWithRequiredField)
+        with self.assertRaises(ConstraintViolationError):
+            loadd(d, JSONObjectWithRequiredField)
 
     def test_satisfied_required_field(self):
         d = {
-            JsonObjectWithRequiredField.SOME_FIELD_NAME: "some string",
-            JsonObjectWithRequiredField.REQUIRED_FIELD_NAME: "another string"
+            JSONObjectWithRequiredField.SOME_FIELD_NAME: "some string",
+            JSONObjectWithRequiredField.REQUIRED_FIELD_NAME: "another string"
         }
-        actual = Deserializer.from_json_dict(d, JsonObjectWithRequiredField)
+        actual = loadd(d, JSONObjectWithRequiredField)
 
-        self.assertEqual(d[JsonObjectWithRequiredField.REQUIRED_FIELD_NAME], actual.required_field)
+        self.assertEqual(d[JSONObjectWithRequiredField.REQUIRED_FIELD_NAME], actual.required_field)
 
     def test_referenced_json_object_with_missing_required_field(self):
         d = {
             Container.CONTAINER_FIELD_NAME: {
-                JsonObjectWithRequiredField.SOME_FIELD_NAME: "some string",
+                JSONObjectWithRequiredField.SOME_FIELD_NAME: "some string",
             }
         }
 
-        with self.assertRaises(FieldValidationError):
-            Deserializer.from_json_dict(d, Container)
+        with self.assertRaises(ConstraintViolationError):
+            loadd(d, Container)
 
     def test_list_with_json_object_with_missing_required_field(self):
         d = {
             Container.CONTAINER_FIELD_NAME: [
                 {
-                    JsonObjectWithRequiredField.SOME_FIELD_NAME: "some string",
+                    JSONObjectWithRequiredField.SOME_FIELD_NAME: "some string",
                 }
             ]
         }
 
-        with self.assertRaises(FieldValidationError):
-            Deserializer.from_json_dict(d, Container)
+        with self.assertRaises(ConstraintViolationError):
+            loadd(d, Container)
 
     def test_list_with_json_object_with_satisfied_required_field(self):
         d = {
             Container.CONTAINER_FIELD_NAME: [
                 {
-                    JsonObjectWithRequiredField.REQUIRED_FIELD_NAME: "some string"
+                    JSONObjectWithRequiredField.REQUIRED_FIELD_NAME: "some string"
                 }
             ]
         }
-        actual = Deserializer.from_json_dict(d, Container)
+        actual = loadd(d, Container)
 
         self.assertEqual(
-            d[Container.CONTAINER_FIELD_NAME][0][JsonObjectWithRequiredField.REQUIRED_FIELD_NAME],
+            d[Container.CONTAINER_FIELD_NAME][0][JSONObjectWithRequiredField.REQUIRED_FIELD_NAME],
             actual.container[0].required_field
         )
 
@@ -386,72 +386,28 @@ class DictDeserializationWithRequiredField(unittest.TestCase):
         d = {
             Container.CONTAINER_FIELD_NAME: {
                 "key1": {
-                    JsonObjectWithRequiredField.SOME_FIELD_NAME: "some string"
+                    JSONObjectWithRequiredField.SOME_FIELD_NAME: "some string"
                 }
             }
         }
 
-        with self.assertRaises(FieldValidationError):
-            Deserializer.from_json_dict(d, Container)
+        with self.assertRaises(ConstraintViolationError):
+            loadd(d, Container)
 
     def test_dict_with_json_object_with_satisfied_required_field(self):
         d = {
             Container.CONTAINER_FIELD_NAME: {
                 "key1": {
-                    JsonObjectWithRequiredField.REQUIRED_FIELD_NAME: "some string"
+                    JSONObjectWithRequiredField.REQUIRED_FIELD_NAME: "some string"
                 }
             }
         }
-        actual = Deserializer.from_json_dict(d, Container)
+        actual = loadd(d, Container)
 
         self.assertEqual(
-            d[Container.CONTAINER_FIELD_NAME]["key1"][JsonObjectWithRequiredField.REQUIRED_FIELD_NAME],
+            d[Container.CONTAINER_FIELD_NAME]["key1"][JSONObjectWithRequiredField.REQUIRED_FIELD_NAME],
             actual.container["key1"].required_field
         )
-
-
-class DictDeserializationWithNotNullable(unittest.TestCase):
-    def test_not_nullable_field_which_is_null(self):
-        d = {
-            JsonObjectWithNotNullableField.NOT_NULLABLE_NAME: None
-        }
-
-        with self.assertRaises(FieldValidationError):
-            Deserializer.from_json_dict(d, JsonObjectWithNotNullableField)
-
-    def test_referenced_json_object_with_not_nullable_field_which_is_null(self):
-        d = {
-            Container.CONTAINER_FIELD_NAME: {
-                JsonObjectWithNotNullableField.NOT_NULLABLE_NAME: None
-            }
-        }
-
-        with self.assertRaises(FieldValidationError):
-            Deserializer.from_json_dict(d, Container)
-
-    def test_list_with_json_object_with_not_nullable_field_which_is_null(self):
-        d = {
-            Container.CONTAINER_FIELD_NAME: [
-                {
-                    JsonObjectWithNotNullableField.NOT_NULLABLE_NAME: None
-                }
-            ]
-        }
-
-        with self.assertRaises(FieldValidationError):
-            Deserializer.from_json_dict(d, Container)
-
-    def test_dict_with_json_object_with_not_nullable_field_which_is_null(self):
-        d = {
-            Container.CONTAINER_FIELD_NAME: {
-                "key1": {
-                    JsonObjectWithNotNullableField.NOT_NULLABLE_NAME: None
-                }
-            }
-        }
-
-        with self.assertRaises(FieldValidationError):
-            Deserializer.from_json_dict(d, Container)
 
 
 class DictDeserializationISO8601Compliance(unittest.TestCase):
@@ -472,7 +428,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
 
     def test_extended_date_format(self):
         self._d[Container.CONTAINER_FIELD_NAME] = self.EXTENDED_DATE
-        actual = Deserializer.from_json_dict(self._d)
+        actual = loadd(self._d)
 
         self.assertIsInstance(actual.container, datetime.date)
         self.assertNotIsInstance(actual.container, datetime.datetime)
@@ -485,7 +441,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
 
     def test_basic_date_format(self):
         self._d[Container.CONTAINER_FIELD_NAME] = self.BASIC_DATE
-        actual = Deserializer.from_json_dict(self._d)
+        actual = loadd(self._d)
 
         self.assertIsInstance(actual.container, datetime.date)
         self.assertNotIsInstance(actual.container, datetime.datetime)
@@ -493,7 +449,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
 
     def test_extended_naive_datetime_with_extended_time(self):
         self._d[Container.CONTAINER_FIELD_NAME] = "{}T{}Z".format(self.EXTENDED_DATE, self.EXTENDED_TIME)
-        actual = Deserializer.from_json_dict(self._d)
+        actual = loadd(self._d)
 
         self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_naive_datetime(actual.container)
@@ -506,21 +462,21 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
 
     def test_basic_naive_datetime_with_extended_time(self):
         self._d[Container.CONTAINER_FIELD_NAME] = "{}T{}Z".format(self.BASIC_DATE, self.EXTENDED_TIME)
-        actual = Deserializer.from_json_dict(self._d)
+        actual = loadd(self._d)
 
         self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_naive_datetime(actual.container)
 
     def test_extended_naive_datetime_with_basic_time(self):
         self._d[Container.CONTAINER_FIELD_NAME] = "{}T{}Z".format(self.EXTENDED_DATE, self.BASIC_TIME)
-        actual = Deserializer.from_json_dict(self._d)
+        actual = loadd(self._d)
 
         self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_naive_datetime(actual.container)
 
     def test_basic_naive_datetime_with_basic_time(self):
         self._d[Container.CONTAINER_FIELD_NAME] = "{}T{}Z".format(self.BASIC_DATE, self.BASIC_TIME)
-        actual = Deserializer.from_json_dict(self._d)
+        actual = loadd(self._d)
 
         self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_naive_datetime(actual.container)
@@ -531,7 +487,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
             self.EXTENDED_TIME,
             self.MICROSECOND
         )
-        actual = Deserializer.from_json_dict(self._d)
+        actual = loadd(self._d)
 
         self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_naive_datetime_with_microsecond(actual.container)
@@ -546,7 +502,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
             self.EXTENDED_TIME,
             self.MICROSECOND
         )
-        actual = Deserializer.from_json_dict(self._d)
+        actual = loadd(self._d)
 
         self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_naive_datetime_with_microsecond(actual.container)
@@ -557,7 +513,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
             self.BASIC_TIME,
             self.MICROSECOND
         )
-        actual = Deserializer.from_json_dict(self._d)
+        actual = loadd(self._d)
 
         self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_naive_datetime_with_microsecond(actual.container)
@@ -568,7 +524,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
             self.BASIC_TIME,
             self.MICROSECOND
         )
-        actual = Deserializer.from_json_dict(self._d)
+        actual = loadd(self._d)
 
         self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_naive_datetime_with_microsecond(actual.container)
@@ -578,7 +534,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
             self.EXTENDED_DATE,
             self.EXTENDED_TIME_WITHOUT_SECOND
         )
-        actual = Deserializer.from_json_dict(self._d)
+        actual = loadd(self._d)
 
         self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_naive_datetime_without_second(actual.container)
@@ -594,7 +550,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
             self.BASIC_DATE,
             self.EXTENDED_TIME_WITHOUT_SECOND
         )
-        actual = Deserializer.from_json_dict(self._d)
+        actual = loadd(self._d)
 
         self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_naive_datetime_without_second(actual.container)
@@ -604,7 +560,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
             self.EXTENDED_DATE,
             self.BASIC_TIME_WITHOUT_SECOND
         )
-        actual = Deserializer.from_json_dict(self._d)
+        actual = loadd(self._d)
 
         self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_naive_datetime_without_second(actual.container)
@@ -614,14 +570,14 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
             self.BASIC_DATE,
             self.BASIC_TIME_WITHOUT_SECOND
         )
-        actual = Deserializer.from_json_dict(self._d)
+        actual = loadd(self._d)
 
         self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_naive_datetime_without_second(actual.container)
 
     def test_extended_naive_datetime_with_only_hour(self):
         self._d[Container.CONTAINER_FIELD_NAME] = "{}T{}Z".format(self.EXTENDED_DATE, self.TIME_ONLY_HOUR)
-        actual = Deserializer.from_json_dict(self._d)
+        actual = loadd(self._d)
 
         self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_naive_datetime_with_only_hour(actual.container)
@@ -634,7 +590,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
 
     def test_basic_naive_datetime_with_only_hour(self):
         self._d[Container.CONTAINER_FIELD_NAME] = "{}T{}Z".format(self.BASIC_DATE, self.TIME_ONLY_HOUR)
-        actual = Deserializer.from_json_dict(self._d)
+        actual = loadd(self._d)
 
         self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_naive_datetime_with_only_hour(actual.container)
@@ -645,7 +601,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
             self.EXTENDED_TIME,
             self.EXTENDED_UTC_OFFSET
         )
-        actual = Deserializer.from_json_dict(self._d)
+        actual = loadd(self._d)
 
         self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_datetime_with_utc_offset(actual.container)
@@ -666,7 +622,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
             self.EXTENDED_TIME,
             self.EXTENDED_UTC_OFFSET
         )
-        actual = Deserializer.from_json_dict(self._d)
+        actual = loadd(self._d)
 
         self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_datetime_with_utc_offset(actual.container)
@@ -678,7 +634,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
             self.MICROSECOND,
             self.EXTENDED_UTC_OFFSET
         )
-        actual = Deserializer.from_json_dict(self._d)
+        actual = loadd(self._d)
 
         self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_datetime_with_microsecond_and_utc_offset(actual.container)
@@ -694,7 +650,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
             self.MICROSECOND,
             self.EXTENDED_UTC_OFFSET
         )
-        actual = Deserializer.from_json_dict(self._d)
+        actual = loadd(self._d)
 
         self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_datetime_with_microsecond_and_utc_offset(actual.container)
@@ -705,7 +661,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
             self.EXTENDED_TIME_WITHOUT_SECOND,
             self.EXTENDED_UTC_OFFSET
         )
-        actual = Deserializer.from_json_dict(self._d)
+        actual = loadd(self._d)
 
         self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_datetime_with_utc_offset_and_without_second(actual.container)
@@ -720,7 +676,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
             self.EXTENDED_TIME_WITHOUT_SECOND,
             self.EXTENDED_UTC_OFFSET
         )
-        actual = Deserializer.from_json_dict(self._d)
+        actual = loadd(self._d)
 
         self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_datetime_with_utc_offset_and_without_second(actual.container)
@@ -731,7 +687,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
             self.TIME_ONLY_HOUR,
             self.EXTENDED_UTC_OFFSET
         )
-        actual = Deserializer.from_json_dict(self._d)
+        actual = loadd(self._d)
 
         self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_datetime_with_only_hour_and_utc_offset(actual.container)
@@ -746,7 +702,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
             self.TIME_ONLY_HOUR,
             self.EXTENDED_UTC_OFFSET
         )
-        actual = Deserializer.from_json_dict(self._d)
+        actual = loadd(self._d)
 
         self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_datetime_with_only_hour_and_utc_offset(actual.container)
@@ -757,7 +713,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
             self.BASIC_TIME,
             self.EXTENDED_UTC_OFFSET
         )
-        actual = Deserializer.from_json_dict(self._d)
+        actual = loadd(self._d)
 
         self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_datetime_with_utc_offset(actual.container)
@@ -768,7 +724,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
             self.BASIC_TIME,
             self.EXTENDED_UTC_OFFSET
         )
-        actual = Deserializer.from_json_dict(self._d)
+        actual = loadd(self._d)
 
         self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_datetime_with_utc_offset(actual.container)
@@ -780,7 +736,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
             self.MICROSECOND,
             self.EXTENDED_UTC_OFFSET
         )
-        actual = Deserializer.from_json_dict(self._d)
+        actual = loadd(self._d)
 
         self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_datetime_with_microsecond_and_utc_offset(actual.container)
@@ -792,7 +748,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
             self.MICROSECOND,
             self.EXTENDED_UTC_OFFSET
         )
-        actual = Deserializer.from_json_dict(self._d)
+        actual = loadd(self._d)
 
         self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_datetime_with_microsecond_and_utc_offset(actual.container)
@@ -803,7 +759,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
             self.BASIC_TIME_WITHOUT_SECOND,
             self.EXTENDED_UTC_OFFSET
         )
-        actual = Deserializer.from_json_dict(self._d)
+        actual = loadd(self._d)
 
         self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_datetime_with_utc_offset_and_without_second(actual.container)
@@ -814,7 +770,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
             self.BASIC_TIME_WITHOUT_SECOND,
             self.EXTENDED_UTC_OFFSET
         )
-        actual = Deserializer.from_json_dict(self._d)
+        actual = loadd(self._d)
 
         self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_datetime_with_utc_offset_and_without_second(actual.container)
@@ -825,7 +781,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
             self.BASIC_TIME,
             self.BASIC_UTC_OFFSET
         )
-        actual = Deserializer.from_json_dict(self._d)
+        actual = loadd(self._d)
 
         self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_datetime_with_utc_offset(actual.container)
@@ -836,7 +792,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
             self.BASIC_TIME,
             self.BASIC_UTC_OFFSET
         )
-        actual = Deserializer.from_json_dict(self._d)
+        actual = loadd(self._d)
 
         self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_datetime_with_utc_offset(actual.container)
@@ -848,7 +804,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
             self.MICROSECOND,
             self.BASIC_UTC_OFFSET
         )
-        actual = Deserializer.from_json_dict(self._d)
+        actual = loadd(self._d)
 
         self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_datetime_with_microsecond_and_utc_offset(actual.container)
@@ -860,7 +816,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
             self.MICROSECOND,
             self.BASIC_UTC_OFFSET
         )
-        actual = Deserializer.from_json_dict(self._d)
+        actual = loadd(self._d)
 
         self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_datetime_with_microsecond_and_utc_offset(actual.container)
@@ -871,7 +827,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
             self.BASIC_TIME_WITHOUT_SECOND,
             self.BASIC_UTC_OFFSET
         )
-        actual = Deserializer.from_json_dict(self._d)
+        actual = loadd(self._d)
 
         self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_datetime_with_utc_offset_and_without_second(actual.container)
@@ -882,7 +838,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
             self.BASIC_TIME_WITHOUT_SECOND,
             self.BASIC_UTC_OFFSET
         )
-        actual = Deserializer.from_json_dict(self._d)
+        actual = loadd(self._d)
 
         self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_datetime_with_utc_offset_and_without_second(actual.container)
@@ -893,7 +849,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
             self.TIME_ONLY_HOUR,
             self.BASIC_UTC_OFFSET
         )
-        actual = Deserializer.from_json_dict(self._d)
+        actual = loadd(self._d)
 
         self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_datetime_with_only_hour_and_utc_offset(actual.container)
@@ -904,7 +860,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
             self.TIME_ONLY_HOUR,
             self.BASIC_UTC_OFFSET
         )
-        actual = Deserializer.from_json_dict(self._d)
+        actual = loadd(self._d)
 
         self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_datetime_with_only_hour_and_utc_offset(actual.container)
@@ -915,7 +871,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
             self.EXTENDED_TIME,
             self.BASIC_UTC_OFFSET
         )
-        actual = Deserializer.from_json_dict(self._d)
+        actual = loadd(self._d)
 
         self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_datetime_with_utc_offset(actual.container)
@@ -926,7 +882,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
             self.EXTENDED_TIME,
             self.BASIC_UTC_OFFSET
         )
-        actual = Deserializer.from_json_dict(self._d)
+        actual = loadd(self._d)
 
         self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_datetime_with_utc_offset(actual.container)
@@ -938,7 +894,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
             self.MICROSECOND,
             self.BASIC_UTC_OFFSET
         )
-        actual = Deserializer.from_json_dict(self._d)
+        actual = loadd(self._d)
 
         self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_datetime_with_microsecond_and_utc_offset(actual.container)
@@ -950,7 +906,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
             self.MICROSECOND,
             self.BASIC_UTC_OFFSET
         )
-        actual = Deserializer.from_json_dict(self._d)
+        actual = loadd(self._d)
 
         self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_datetime_with_microsecond_and_utc_offset(actual.container)
@@ -961,7 +917,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
             self.EXTENDED_TIME_WITHOUT_SECOND,
             self.BASIC_UTC_OFFSET
         )
-        actual = Deserializer.from_json_dict(self._d)
+        actual = loadd(self._d)
 
         self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_datetime_with_utc_offset_and_without_second(actual.container)
@@ -972,7 +928,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
             self.EXTENDED_TIME_WITHOUT_SECOND,
             self.BASIC_UTC_OFFSET
         )
-        actual = Deserializer.from_json_dict(self._d)
+        actual = loadd(self._d)
 
         self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_datetime_with_utc_offset_and_without_second(actual.container)
@@ -983,7 +939,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
             self.EXTENDED_TIME,
             self.UTC_OFFSET_ONLY_HOUR
         )
-        actual = Deserializer.from_json_dict(self._d)
+        actual = loadd(self._d)
 
         self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_datetime_with_utc_offset(actual.container)
@@ -994,7 +950,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
             self.EXTENDED_TIME,
             self.UTC_OFFSET_ONLY_HOUR
         )
-        actual = Deserializer.from_json_dict(self._d)
+        actual = loadd(self._d)
 
         self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_datetime_with_utc_offset(actual.container)
@@ -1006,7 +962,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
             self.MICROSECOND,
             self.UTC_OFFSET_ONLY_HOUR
         )
-        actual = Deserializer.from_json_dict(self._d)
+        actual = loadd(self._d)
 
         self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_datetime_with_microsecond_and_utc_offset(actual.container)
@@ -1018,7 +974,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
             self.MICROSECOND,
             self.UTC_OFFSET_ONLY_HOUR
         )
-        actual = Deserializer.from_json_dict(self._d)
+        actual = loadd(self._d)
 
         self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_datetime_with_microsecond_and_utc_offset(actual.container)
@@ -1029,7 +985,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
             self.EXTENDED_TIME_WITHOUT_SECOND,
             self.UTC_OFFSET_ONLY_HOUR
         )
-        actual = Deserializer.from_json_dict(self._d)
+        actual = loadd(self._d)
 
         self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_datetime_with_utc_offset_and_without_second(actual.container)
@@ -1040,7 +996,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
             self.EXTENDED_TIME_WITHOUT_SECOND,
             self.UTC_OFFSET_ONLY_HOUR
         )
-        actual = Deserializer.from_json_dict(self._d)
+        actual = loadd(self._d)
 
         self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_datetime_with_utc_offset_and_without_second(actual.container)
@@ -1051,7 +1007,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
             self.TIME_ONLY_HOUR,
             self.UTC_OFFSET_ONLY_HOUR
         )
-        actual = Deserializer.from_json_dict(self._d)
+        actual = loadd(self._d)
 
         self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_datetime_with_only_hour_and_utc_offset(actual.container)
@@ -1062,7 +1018,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
             self.TIME_ONLY_HOUR,
             self.UTC_OFFSET_ONLY_HOUR
         )
-        actual = Deserializer.from_json_dict(self._d)
+        actual = loadd(self._d)
 
         self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_datetime_with_only_hour_and_utc_offset(actual.container)
@@ -1073,7 +1029,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
             self.BASIC_TIME,
             self.UTC_OFFSET_ONLY_HOUR
         )
-        actual = Deserializer.from_json_dict(self._d)
+        actual = loadd(self._d)
 
         self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_datetime_with_utc_offset(actual.container)
@@ -1084,7 +1040,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
             self.BASIC_TIME,
             self.UTC_OFFSET_ONLY_HOUR
         )
-        actual = Deserializer.from_json_dict(self._d)
+        actual = loadd(self._d)
 
         self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_datetime_with_utc_offset(actual.container)
@@ -1096,7 +1052,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
             self.MICROSECOND,
             self.UTC_OFFSET_ONLY_HOUR
         )
-        actual = Deserializer.from_json_dict(self._d)
+        actual = loadd(self._d)
 
         self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_datetime_with_microsecond_and_utc_offset(actual.container)
@@ -1108,7 +1064,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
             self.MICROSECOND,
             self.UTC_OFFSET_ONLY_HOUR
         )
-        actual = Deserializer.from_json_dict(self._d)
+        actual = loadd(self._d)
 
         self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_datetime_with_microsecond_and_utc_offset(actual.container)
@@ -1119,7 +1075,7 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
             self.BASIC_TIME_WITHOUT_SECOND,
             self.UTC_OFFSET_ONLY_HOUR
         )
-        actual = Deserializer.from_json_dict(self._d)
+        actual = loadd(self._d)
 
         self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_datetime_with_utc_offset_and_without_second(actual.container)
@@ -1130,7 +1086,26 @@ class DictDeserializationISO8601Compliance(unittest.TestCase):
             self.BASIC_TIME_WITHOUT_SECOND,
             self.UTC_OFFSET_ONLY_HOUR
         )
-        actual = Deserializer.from_json_dict(self._d)
+        actual = loadd(self._d)
 
         self.assertIsInstance(actual.container, datetime.datetime)
         self._assert_datetime_with_utc_offset_and_without_second(actual.container)
+
+
+class DictDeserializationWithFieldMode(unittest.TestCase):
+    def setUp(self):
+        self._d = {}
+
+    def test_only_encodable_field(self):
+        self._d[ContainerWithFieldModeEncodeOnly.ENCODE_ONLY_NAME] = "some_value"
+        actual = loadd(self._d)
+
+        self.assertIsInstance(actual, ContainerWithFieldModeEncodeOnly)
+        self.assertNotEqual(self._d[ContainerWithFieldModeEncodeOnly.ENCODE_ONLY_NAME], actual.encode_only)
+
+    def test_only_decodable_field(self):
+        self._d[ContainerWithFieldModeDecodeOnly.DECODE_ONLY_NAME] = "some_value"
+        actual = loadd(self._d)
+
+        self.assertIsInstance(actual, ContainerWithFieldModeDecodeOnly)
+        self.assertEqual(self._d[ContainerWithFieldModeDecodeOnly.DECODE_ONLY_NAME], actual.decode_only)

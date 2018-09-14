@@ -15,7 +15,7 @@ To install json-transform from PyPI you simply have to type the following comman
 Git
 ---
 
-To install the json-transform from directly from the source which is hosted on `Bitbucket <https://bitbucket.org/Peter-Morawski/json-transform/>`_ you have to type the following commands into the console
+To install the json-transform directly from the source which is hosted on `Bitbucket <https://bitbucket.org/Peter-Morawski/json-transform/>`_ you have to type the following commands into the console
 
 .. code-block:: console
 

@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 
-from jsontransform import JsonObject, field
 from decorator import decorator
+
+from jsontransform import FieldMode, JSONObject, field
 
 
 @decorator
@@ -12,7 +13,7 @@ def some_decorator(func, *args, **kwargs):
     return func(*args, **kwargs)
 
 
-class Container(JsonObject):
+class Container(JSONObject):
     CONTAINER_FIELD_NAME = "container"
 
     def __init__(self):
@@ -52,7 +53,7 @@ class ContainerWithSomeDecoratorAfterField(Container):
         self._container = value
 
 
-class JsonObjectWithoutFields(JsonObject):
+class JSONObjectWithoutFields(JSONObject):
     def __init__(self):
         self._something = 0
 
@@ -78,7 +79,7 @@ class NotSerializableObject(object):
         self._name = value
 
 
-class Car(JsonObject):
+class Car(JSONObject):
     FIELD_MODEL_NAME_NAME = "modelName"
     FIELD_MAX_SPEED_NAME = "maxSpeed"
 
@@ -139,7 +140,7 @@ class ExtendedExtendedCar(ExtendedCar):
         self._color = value
 
 
-class JsonObjectWithRequiredField(JsonObject):
+class JSONObjectWithRequiredField(JSONObject):
     SOME_FIELD_NAME = "someField"
     REQUIRED_FIELD_NAME = "requiredField"
 
@@ -166,23 +167,7 @@ class JsonObjectWithRequiredField(JsonObject):
         self._required_field = value
 
 
-class JsonObjectWithNotNullableField(JsonObject):
-    NOT_NULLABLE_NAME = "notNullable"
-
-    def __init__(self):
-        self._not_nullable = 0
-
-    @property
-    @field(NOT_NULLABLE_NAME, nullable=False)
-    def not_nullable(self):
-        return self._not_nullable
-
-    @not_nullable.setter
-    def not_nullable(self, value):
-        self._not_nullable = value
-
-
-class IssueType(JsonObject):
+class IssueType(JSONObject):
     ID_NAME = "id"
     DESCRIPTION_NAME = "description"
     ICON_URL = "iconUrl"
@@ -197,7 +182,7 @@ class IssueType(JsonObject):
         self._sub_task = False
 
     @property
-    @field(ID_NAME, required=True, nullable=False)
+    @field(ID_NAME, required=True)
     def id(self):
         return self._id
 
@@ -206,7 +191,7 @@ class IssueType(JsonObject):
         self._id = value
 
     @property
-    @field(DESCRIPTION_NAME, required=True, nullable=False)
+    @field(DESCRIPTION_NAME, required=True)
     def description(self):
         return self._description
 
@@ -215,7 +200,7 @@ class IssueType(JsonObject):
         self._description = value
 
     @property
-    @field(ICON_URL, required=True, nullable=False)
+    @field(ICON_URL, required=True)
     def icon_url(self):
         return self._icon_url
 
@@ -224,7 +209,7 @@ class IssueType(JsonObject):
         self._icon_url = value
 
     @property
-    @field(NAME_NAME, required=True, nullable=False)
+    @field(NAME_NAME, required=True)
     def name(self):
         return self._name
 
@@ -233,7 +218,7 @@ class IssueType(JsonObject):
         self._name = value
 
     @property
-    @field(SUB_TASK_NAME, required=True, nullable=False)
+    @field(SUB_TASK_NAME, required=True)
     def sub_task(self):
         return self._sub_task
 
@@ -242,7 +227,7 @@ class IssueType(JsonObject):
         self._sub_task = value
 
 
-class IssuePriority(JsonObject):
+class IssuePriority(JSONObject):
     ID_NAME = "name"
     ICON_URL_NAME = "iconUrl"
     NAME_NAME = "name"
@@ -253,7 +238,7 @@ class IssuePriority(JsonObject):
         self._name = u""
 
     @property
-    @field(ID_NAME, required=True, nullable=False)
+    @field(ID_NAME, required=True)
     def id(self):
         return self._id
 
@@ -262,7 +247,7 @@ class IssuePriority(JsonObject):
         self._id = value
 
     @property
-    @field(ICON_URL_NAME, required=True, nullable=False)
+    @field(ICON_URL_NAME, required=True)
     def icon_url(self):
         return self._icon_url
 
@@ -271,10 +256,42 @@ class IssuePriority(JsonObject):
         self._icon_url = value
 
     @property
-    @field(NAME_NAME, required=True, nullable=False)
+    @field(NAME_NAME, required=True)
     def name(self):
         return self._name
 
     @name.setter
     def name(self, value):
         self._name = value
+
+
+class ContainerWithFieldModeEncodeOnly(JSONObject):
+    ENCODE_ONLY_NAME = "encodeOnly"
+
+    def __init__(self):
+        self._encode_only = None
+
+    @property
+    @field(ENCODE_ONLY_NAME, required=True, mode=FieldMode.ENCODE)
+    def encode_only(self):
+        return self._encode_only
+
+    @encode_only.setter
+    def encode_only(self, value):
+        self._encode_only = value
+
+
+class ContainerWithFieldModeDecodeOnly(JSONObject):
+    DECODE_ONLY_NAME = "decodeOnly"
+
+    def __init__(self):
+        self._decode_only = None
+
+    @property
+    @field(DECODE_ONLY_NAME, required=True, mode=FieldMode.DECODE)
+    def decode_only(self):
+        return self._decode_only
+
+    @decode_only.setter
+    def decode_only(self, value):
+        self._decode_only = value
