@@ -9,11 +9,11 @@ with open("requirements.txt", "r") as f:
 
 setuptools.setup(
     name="json-transform",
-    version="0.4.1",
+    version="1.0.0",
     author="Peter Morawski",
     author_email="contact@peter-morawski.de",
     keywords="convert python object json",
-    description="Convert python objects to JSON objects and vice versa.",
+    description="Convert python objects to JSON documents and vice versa.",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://bitbucket.org/Peter-Morawski/json-transform",
@@ -22,7 +22,7 @@ setuptools.setup(
     py_modules=["jsontransform"],
     license="MIT License",
     classifiers=(
-        "Development Status :: 3 - Alpha",
+        "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",
         "License :: OSI Approved :: MIT License",
         "Programming Language :: Python",
