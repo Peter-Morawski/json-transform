@@ -12,7 +12,7 @@ from dateutil import parser
 from decorator import decorator
 
 __author__ = "Peter Morawski"
-__version__ = "1.0.0"
+__version__ = "1.0.1"
 
 _DATE_FORMAT_REGEX = r"^([0-9]{4}-[0-9]{1,2}-[0-9]{1,2}|[0-9]{8})$"
 _DATETIME_FORMAT_REGEX = r"^([0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]{8})T([0-9]{2}(:[0-9]{2})?(:[0-9]{2})?|[0-9]{6}|[0-9]{4}" \
