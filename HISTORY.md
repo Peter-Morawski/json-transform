@@ -1,5 +1,9 @@
 # History
 
+## 1.0.1 (2018-09-15)
+
+* fix the installation problem
+
 ## 1.0.0 (2018-09-14)
 
 * implement the new/stable API design

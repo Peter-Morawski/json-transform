@@ -12,7 +12,7 @@ setuptools.setup(
     description="Convert python objects to JSON documents and vice versa.",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://bitbucket.org/Peter-Morawski/json-transform",
+    url="https://github.com/Peter-Morawski/json-transform",
     install_requires=["decorator>=4.3.0", "python-dateutil>=2.7.0"],
     test_suite="test_suite",
     py_modules=["jsontransform"],

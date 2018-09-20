@@ -2,7 +2,7 @@
 
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/a1aab0fd1e964a729749f6d2c962551c)](https://www.codacy.com/app/pmorawski/json-transform?utm_source=Peter-Morawski@bitbucket.org&amp;utm_medium=referral&amp;utm_content=Peter-Morawski/json-transform&amp;utm_campaign=Badge_Grade)
 
-Json Transform allows you to simply convert your Python objects into a JSON document and vice versa.
+JSON-Transform allows you to simply convert your Python objects into a JSON document and vice versa.
 
 New? Here is some help:
 
@@ -85,5 +85,5 @@ customer.first_name
 ### More
 
 * Check out the [documentation](https://json-transform.readthedocs.io/en/latest/).
-* Check out the [history](https://bitbucket.org/Peter-Morawski/json-transform/src/master/HISTORY.md)
-* Check out the [API design](https://bitbucket.org/Peter-Morawski/json-transform/wiki/API%20Design)
+* Check out the [history](https://github.com/Peter-Morawski/json-transform/blob/master/HISTORY.md)
+* Check out the [API design](https://github.com/Peter-Morawski/json-transform/wiki/API-Design)
