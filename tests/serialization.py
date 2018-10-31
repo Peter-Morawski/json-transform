@@ -7,7 +7,8 @@ import unittest
 from dateutil import tz
 
 from jsontransform import ConfigurationError, JSONEncoder, dumpd
-from .common import get_new_york_utc_offset
+from .common import get_new_york_utc_offset, get_berlin_utc_offset, get_london_utc_offset, get_istanbul_utc_offset,\
+    get_tokyo_utc_offset
 from .datastructure import Container, ContainerWithFieldModeDecodeOnly, ContainerWithFieldModeEncodeOnly, \
     ContainerWithSomeDecoratorAfterField, ContainerWithSomeDecoratorBeforeField, ExtendedCar, JSONObjectWithoutFields, \
     NotSerializableObject
@@ -659,16 +660,16 @@ class DictSerializationWithTimes(unittest.TestCase):
         self._datetime_timezone_helper("UTC", "+0000")
 
     def test_with_berlin_datetime(self):
-        self._datetime_timezone_helper("Europe/Berlin", "+0200")
+        self._datetime_timezone_helper("Europe/Berlin", get_berlin_utc_offset())
 
     def test_with_london_datetime(self):
-        self._datetime_timezone_helper("Europe/London", "+0100")
+        self._datetime_timezone_helper("Europe/London", get_london_utc_offset())
 
     def test_with_istanbul_datetime(self):
-        self._datetime_timezone_helper("Europe/Istanbul", "+0300")
+        self._datetime_timezone_helper("Europe/Istanbul", get_istanbul_utc_offset())
 
     def test_with_tokyo_datetime(self):
-        self._datetime_timezone_helper("Asia/Tokyo", "+0900")
+        self._datetime_timezone_helper("Asia/Tokyo", get_tokyo_utc_offset())
 
     def test_with_new_york_datetime(self):
         self._datetime_timezone_helper("America/New_York", get_new_york_utc_offset())
@@ -704,16 +705,16 @@ class DictSerializationWithTimes(unittest.TestCase):
         self._datetime_timezone_list_helper("UTC", "+0000")
 
     def test_list_with_berlin_datetime(self):
-        self._datetime_timezone_list_helper("Europe/Berlin", "+0200")
+        self._datetime_timezone_list_helper("Europe/Berlin", get_berlin_utc_offset())
 
     def test_list_with_london_datetime(self):
-        self._datetime_timezone_list_helper("Europe/London", "+0100")
+        self._datetime_timezone_list_helper("Europe/London", get_london_utc_offset())
 
     def test_list_with_istanbul_datetime(self):
-        self._datetime_timezone_list_helper("Europe/Istanbul", "+0300")
+        self._datetime_timezone_list_helper("Europe/Istanbul", get_istanbul_utc_offset())
 
     def test_list_with_tokyo_datetime(self):
-        self._datetime_timezone_list_helper("Asia/Tokyo", "+0900")
+        self._datetime_timezone_list_helper("Asia/Tokyo", get_tokyo_utc_offset())
 
     def test_list_with_new_york_datetime(self):
         self._datetime_timezone_list_helper("America/New_York", get_new_york_utc_offset())
@@ -748,16 +749,16 @@ class DictSerializationWithTimes(unittest.TestCase):
         self._datetime_timezone_tuple_helper("UTC", "+0000")
 
     def test_tuple_with_berlin_datetime(self):
-        self._datetime_timezone_tuple_helper("Europe/Berlin", "+0200")
+        self._datetime_timezone_tuple_helper("Europe/Berlin", get_berlin_utc_offset())
 
     def test_tuple_with_london_datetime(self):
-        self._datetime_timezone_tuple_helper("Europe/London", "+0100")
+        self._datetime_timezone_tuple_helper("Europe/London", get_london_utc_offset())
 
     def test_tuple_with_istanbul_datetime(self):
-        self._datetime_timezone_tuple_helper("Europe/Istanbul", "+0300")
+        self._datetime_timezone_tuple_helper("Europe/Istanbul", get_istanbul_utc_offset())
 
     def test_tuple_with_tokyo_datetime(self):
-        self._datetime_timezone_tuple_helper("Asia/Tokyo", "+0900")
+        self._datetime_timezone_tuple_helper("Asia/Tokyo", get_tokyo_utc_offset())
 
     def test_tuple_with_new_york_datetime(self):
         self._datetime_timezone_tuple_helper("America/New_York", get_new_york_utc_offset())
@@ -765,8 +766,8 @@ class DictSerializationWithTimes(unittest.TestCase):
     def _datetime_timezone_tuple_helper(self, timezone_name, utc_offset):
         self._container.container = (
             datetime.datetime.now(tz.gettz(timezone_name)),
-            datetime.datetime.now(tz.gettz(timezone_name)) + datetime.timedelta(2),
-            datetime.datetime.now(tz.gettz(timezone_name)) - datetime.timedelta(16)
+            datetime.datetime.now(tz.gettz(timezone_name)) + datetime.timedelta(days=2),
+            datetime.datetime.now(tz.gettz(timezone_name)) - datetime.timedelta(minutes=16)
         )
         self._datetime_timezone_iterable_helper(utc_offset)
 
@@ -796,23 +797,23 @@ class DictSerializationWithTimes(unittest.TestCase):
         self._datetime_timezone_set_helper("UTC", "+0000")
 
     def test_set_with_berlin_datetime(self):
-        self._datetime_timezone_set_helper("Europe/Berlin", "+0200")
+        self._datetime_timezone_set_helper("Europe/Berlin", get_berlin_utc_offset())
 
     def test_set_with_london_datetime(self):
-        self._datetime_timezone_set_helper("Europe/London", "+0100")
+        self._datetime_timezone_set_helper("Europe/London", get_london_utc_offset())
 
     def test_set_with_istanbul_datetime(self):
-        self._datetime_timezone_set_helper("Europe/Istanbul", "+0300")
+        self._datetime_timezone_set_helper("Europe/Istanbul", get_istanbul_utc_offset())
 
     def test_set_with_tokyo_datetime(self):
-        self._datetime_timezone_set_helper("Asia/Tokyo", "+0900")
+        self._datetime_timezone_set_helper("Asia/Tokyo", get_tokyo_utc_offset())
 
     def test_set_with_new_york_datetime(self):
         self._datetime_timezone_set_helper("America/New_York", get_new_york_utc_offset())
 
     def _datetime_timezone_set_helper(self, timezone_name, utc_offset):
         self._container.container = {
-            datetime.datetime.now(tz.gettz(timezone_name)) - datetime.timedelta(7),
+            datetime.datetime.now(tz.gettz(timezone_name)) - datetime.timedelta(days=1),
             datetime.datetime.now(tz.gettz(timezone_name)) + datetime.timedelta(hours=1),
             datetime.datetime.now(tz.gettz(timezone_name))
         }
@@ -852,23 +853,23 @@ class DictSerializationWithTimes(unittest.TestCase):
         self._datetime_timezone_dict_helper("UTC", "+0000")
 
     def test_dict_with_berlin_datetime(self):
-        self._datetime_timezone_dict_helper("Europe/Berlin", "+0200")
+        self._datetime_timezone_dict_helper("Europe/Berlin", get_berlin_utc_offset())
 
     def test_dict_with_london_datetime(self):
-        self._datetime_timezone_dict_helper("Europe/London", "+0100")
+        self._datetime_timezone_dict_helper("Europe/London", get_london_utc_offset())
 
     def test_dict_with_istanbul_datetime(self):
-        self._datetime_timezone_dict_helper("Europe/Istanbul", "+0300")
+        self._datetime_timezone_dict_helper("Europe/Istanbul", get_istanbul_utc_offset())
 
     def test_dict_with_tokyo_datetime(self):
-        self._datetime_timezone_dict_helper("Asia/Tokyo", "+0900")
+        self._datetime_timezone_dict_helper("Asia/Tokyo", get_tokyo_utc_offset())
 
     def test_dict_with_new_york_datetime(self):
         self._datetime_timezone_dict_helper("America/New_York", get_new_york_utc_offset())
 
     def _datetime_timezone_dict_helper(self, timezone_name, utc_offset):
         self._container.container = {
-            "key1": datetime.datetime.now(tz.gettz(timezone_name)) - datetime.timedelta(12),
+            "key1": datetime.datetime.now(tz.gettz(timezone_name)) - datetime.timedelta(days=1),
             "key2": datetime.datetime.now(tz.gettz(timezone_name)),
             "key3": datetime.datetime.now(tz.gettz(timezone_name)) + datetime.timedelta(minutes=1)
         }
