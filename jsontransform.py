@@ -12,15 +12,15 @@ from dateutil import parser
 from decorator import decorator
 
 __author__ = "Peter Morawski"
-__version__ = "1.0.1"
+__version__ = "2.0.0"
 
-_DATE_FORMAT_REGEX = r"^([0-9]{4}-[0-9]{1,2}-[0-9]{1,2}|[0-9]{8})$"
-_DATETIME_FORMAT_REGEX = r"^([0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]{8})T([0-9]{2}(:[0-9]{2})?(:[0-9]{2})?|[0-9]{6}|[0-9]{4}" \
-                         r")(\.[0-9]{3})?(Z|((\+|-)[0-9]{2}:?([0-9]{2})?))$"
+_DATE_FORMAT_REGEX = re.compile(r"^([0-9]{4}-[0-9]{1,2}-[0-9]{1,2}|[0-9]{8})$")
+_DATETIME_FORMAT_REGEX = re.compile(r"^([0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]{8})T([0-9]{2}(:[0-9]{2})?(:[0-9]{2})?|[0-9]"
+                                    r"{6}|[0-9]{4})(\.[0-9]{3})?(Z|((\+|-)[0-9]{2}:?([0-9]{2})?))$")
 
-_JSON_FIELD_NAME = "_json_field_name"
-_JSON_FIELD_REQUIRED = "_json_field_required"
-_JSON_FIELD_MODE = "_json_field_mode"
+_JSON_FIELD_NAME = "__json_field_name"
+_JSON_FIELD_REQUIRED = "__json_field_required"
+_JSON_FIELD_MODE = "__json_field_mode"
 
 _PY2 = 2
 
@@ -46,12 +46,13 @@ class MissingObjectError(Exception):
     pass
 
 
-class JSONObject(object):
+class JSONObject(dict):
     """
     Every entity/class which is intended to be encodable and decodable to a JSON document **MUST** inherit/extend this
     class.
     """
-    pass
+    def __repr__(self):
+        return dumps(self)
 
 
 class FieldMode(object):
@@ -181,6 +182,8 @@ class JSONEncoder(object):
             return value
         elif _JSONCommon.value_is_simple_type(value):
             return value
+        elif isinstance(value, JSONObject):
+            return dumpd(value)
         elif isinstance(value, dict):
             result = {}
             for key in value.keys():
@@ -193,8 +196,6 @@ class JSONEncoder(object):
                 result.append(self._get_sanitized_value(item))
 
             return result
-        elif isinstance(value, JSONObject):
-            return dumpd(value)
         elif isinstance(value, datetime.datetime):
             if value.tzinfo:
                 return value.strftime(self.DATETIME_TZ_FORMAT)
@@ -314,9 +315,9 @@ class JSONDecoder(object):
         elif _JSONCommon.value_is_simple_type(sanitized_value):
             if isinstance(sanitized_value, str) or sys.version_info.major == _PY2 and isinstance(sanitized_value,
                                                                                                  unicode):
-                if re.match(_DATE_FORMAT_REGEX, sanitized_value):
+                if _DATE_FORMAT_REGEX.match(sanitized_value):
                     return parser.isoparse(sanitized_value).date()
-                elif re.match(_DATETIME_FORMAT_REGEX, sanitized_value):
+                elif _DATETIME_FORMAT_REGEX.match(sanitized_value):
                     return parser.isoparse(sanitized_value)
 
             return sanitized_value

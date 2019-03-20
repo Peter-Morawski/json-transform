@@ -17,10 +17,11 @@ class Container(JSONObject):
     CONTAINER_FIELD_NAME = "container"
 
     def __init__(self):
+        super(Container, self).__init__()
         self._container = None
 
     @property
-    @field()
+    @field(CONTAINER_FIELD_NAME)
     def container(self):
         return self._container
 
@@ -55,6 +56,7 @@ class ContainerWithSomeDecoratorAfterField(Container):
 
 class JSONObjectWithoutFields(JSONObject):
     def __init__(self):
+        super(JSONObjectWithoutFields, self).__init__()
         self._something = 0
 
     @property
@@ -84,6 +86,7 @@ class Car(JSONObject):
     FIELD_MAX_SPEED_NAME = "maxSpeed"
 
     def __init__(self):
+        super(Car, self).__init__()
         self._model_name = ""
         self._max_speed = 0
 
@@ -145,6 +148,7 @@ class JSONObjectWithRequiredField(JSONObject):
     REQUIRED_FIELD_NAME = "requiredField"
 
     def __init__(self):
+        super(JSONObjectWithRequiredField, self).__init__()
         self._some_field = None
         self._required_field = None
 
@@ -175,6 +179,7 @@ class IssueType(JSONObject):
     SUB_TASK_NAME = "subTask"
 
     def __init__(self):
+        super(IssueType, self).__init__()
         self._id = u""
         self._description = u""
         self._icon_url = u""
@@ -233,6 +238,7 @@ class IssuePriority(JSONObject):
     NAME_NAME = "name"
 
     def __init__(self):
+        super(IssuePriority, self).__init__()
         self._id = u""
         self._icon_url = u""
         self._name = u""
@@ -269,6 +275,7 @@ class ContainerWithFieldModeEncodeOnly(JSONObject):
     ENCODE_ONLY_NAME = "encodeOnly"
 
     def __init__(self):
+        super(ContainerWithFieldModeEncodeOnly, self).__init__()
         self._encode_only = None
 
     @property
@@ -285,6 +292,7 @@ class ContainerWithFieldModeDecodeOnly(JSONObject):
     DECODE_ONLY_NAME = "decodeOnly"
 
     def __init__(self):
+        super(ContainerWithFieldModeDecodeOnly, self).__init__()
         self._decode_only = None
 
     @property
